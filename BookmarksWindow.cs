@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
@@ -23,7 +24,16 @@ namespace EasyConnect
 		/// <summary>
 		/// Full path to the file where bookmarks data is serialized.
 		/// </summary>
-		protected readonly string BookmarksFileName = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+		protected string BookmarksFileName
+		{
+			get
+			{
+				if (_applicationForm.Options.UseSharedBookmarks)
+					return _applicationForm.Options.SharedBookmarksFileName;
+
+				return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+			}
+		}
 
 		/// <summary>
 		/// Main application instance that this window is associated with, which is used to call back into application functionality.
@@ -114,6 +124,39 @@ namespace EasyConnect
 		/// </summary>
 		protected TreeNode _treeViewDropTarget = null;
 
+		protected void Load()
+		{
+			if (File.Exists(BookmarksFileName))
+			{
+				XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
+
+				using (XmlReader bookmarksReader = new XmlTextReader(BookmarksFileName))
+				{
+					if (_applicationForm.Options.UseSharedBookmarks && _applicationForm.Options.EncryptionType.Value == EncryptionType.Rsa)
+					{
+						string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
+						string bookmarksID = bookmarksReader.GetAttribute("BookmarksID");
+
+						CspParameters parameters = new CspParameters
+							                              {
+								                              ProviderName = "EasyConnect " + bookmarksID
+							                              };
+						RSACryptoServiceProvider crypto = new RSACryptoServiceProvider(parameters);
+						SHA256CryptoServiceProvider shaCrypto = new SHA256CryptoServiceProvider();
+
+						if (keyThumbprint != Convert.ToBase64String(shaCrypto.ComputeHash(new UnicodeEncoding().GetBytes(crypto.ToXmlString(true)))))
+							throw new Exception("No encryption key found for this bookmarks file.");
+
+						bookmarksReader.Read();
+					}
+
+					// Deserialize the bookmarks folder structure from BookmarksFileName; BookmarksFolder.ReadXml() will call itself recursively to deserialize
+					// child folders, so all we have to do is start the deserialization process from the root folder
+					_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
+				}
+			}
+		}
+
 		/// <summary>
 		/// Constructor; deserializes the bookmarks folder structure, adds the various folder nodes to <see cref="_bookmarksFoldersTreeView"/>, and gets the
 		/// icons for each protocol.
@@ -127,15 +170,7 @@ namespace EasyConnect
 			_bookmarksFoldersTreeView.Sorted = true;
 			_bookmarksListView.ListViewItemSorter = new BookmarksListViewComparer();
 
-			if (File.Exists(BookmarksFileName))
-			{
-				// Deserialize the bookmarks folder structure from BookmarksFileName; BookmarksFolder.ReadXml() will call itself recursively to deserialize
-				// child folders, so all we have to do is start the deserialization process from the root folder
-				XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
-
-				using (XmlReader bookmarksReader = new XmlTextReader(BookmarksFileName))
-					_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
-			}
+			Load();
 
 			// Set the handler methods for changing the bookmarks or child folders; these are responsible for updating the tree view and list view UI when
 			// items are added or removed from the bookmarks or child folders collections

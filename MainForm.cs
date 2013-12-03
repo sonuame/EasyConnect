@@ -354,7 +354,7 @@ can be used.";
 					PasswordWindow passwordWindow = new PasswordWindow();
 					passwordWindow.ShowDialog();
 
-					ConnectionFactory.SetEncryptionType(EncryptionType.Rijndael, passwordWindow.Password);
+					ConnectionFactory.SetRijndaelEncryptor(passwordWindow.Password);
 				}
 
 				else

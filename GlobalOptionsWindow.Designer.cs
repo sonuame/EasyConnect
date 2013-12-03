@@ -37,6 +37,11 @@
 			this._encryptionTypeLabel = new System.Windows.Forms.Label();
 			this._titleLabel = new System.Windows.Forms.Label();
 			this.panel1 = new System.Windows.Forms.Panel();
+			this._appDataFolderRadioButton = new System.Windows.Forms.RadioButton();
+			this._sharedLocationRadioButton = new System.Windows.Forms.RadioButton();
+			this._sharedLocationTextBox = new System.Windows.Forms.TextBox();
+			this._sharedLocationBrowseButton = new System.Windows.Forms.Button();
+			this._bookmarksLocationLabel = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// _defaultProtocolLabel
@@ -137,6 +142,56 @@
 			this.panel1.Size = new System.Drawing.Size(544, 1);
 			this.panel1.TabIndex = 74;
 			// 
+			// _appDataFolderRadioButton
+			// 
+			this._appDataFolderRadioButton.AutoSize = true;
+			this._appDataFolderRadioButton.Location = new System.Drawing.Point(227, 176);
+			this._appDataFolderRadioButton.Name = "_appDataFolderRadioButton";
+			this._appDataFolderRadioButton.Size = new System.Drawing.Size(142, 17);
+			this._appDataFolderRadioButton.TabIndex = 75;
+			this._appDataFolderRadioButton.TabStop = true;
+			this._appDataFolderRadioButton.Text = "User\'s AppData directory";
+			this._appDataFolderRadioButton.UseVisualStyleBackColor = true;
+			// 
+			// _sharedLocationRadioButton
+			// 
+			this._sharedLocationRadioButton.AutoSize = true;
+			this._sharedLocationRadioButton.Location = new System.Drawing.Point(228, 200);
+			this._sharedLocationRadioButton.Name = "_sharedLocationRadioButton";
+			this._sharedLocationRadioButton.Size = new System.Drawing.Size(107, 17);
+			this._sharedLocationRadioButton.TabIndex = 76;
+			this._sharedLocationRadioButton.TabStop = true;
+			this._sharedLocationRadioButton.Text = "A shared location";
+			this._sharedLocationRadioButton.UseVisualStyleBackColor = true;
+			// 
+			// _sharedLocationTextBox
+			// 
+			this._sharedLocationTextBox.Enabled = false;
+			this._sharedLocationTextBox.Location = new System.Drawing.Point(245, 226);
+			this._sharedLocationTextBox.Name = "_sharedLocationTextBox";
+			this._sharedLocationTextBox.Size = new System.Drawing.Size(191, 20);
+			this._sharedLocationTextBox.TabIndex = 77;
+			// 
+			// _sharedLocationBrowseButton
+			// 
+			this._sharedLocationBrowseButton.Enabled = false;
+			this._sharedLocationBrowseButton.Location = new System.Drawing.Point(441, 224);
+			this._sharedLocationBrowseButton.Name = "_sharedLocationBrowseButton";
+			this._sharedLocationBrowseButton.Size = new System.Drawing.Size(24, 23);
+			this._sharedLocationBrowseButton.TabIndex = 78;
+			this._sharedLocationBrowseButton.Text = "...";
+			this._sharedLocationBrowseButton.UseVisualStyleBackColor = true;
+			// 
+			// _bookmarksLocationLabel
+			// 
+			this._bookmarksLocationLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+			this._bookmarksLocationLabel.Location = new System.Drawing.Point(48, 176);
+			this._bookmarksLocationLabel.Name = "_bookmarksLocationLabel";
+			this._bookmarksLocationLabel.Size = new System.Drawing.Size(173, 20);
+			this._bookmarksLocationLabel.TabIndex = 79;
+			this._bookmarksLocationLabel.Text = "Bookmarks location:";
+			this._bookmarksLocationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
 			// GlobalOptionsWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -144,6 +199,11 @@
 			this.AutoScroll = true;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(249)))), ((int)(((byte)(249)))), ((int)(((byte)(249)))));
 			this.ClientSize = new System.Drawing.Size(597, 384);
+			this.Controls.Add(this._bookmarksLocationLabel);
+			this.Controls.Add(this._sharedLocationBrowseButton);
+			this.Controls.Add(this._sharedLocationTextBox);
+			this.Controls.Add(this._sharedLocationRadioButton);
+			this.Controls.Add(this._appDataFolderRadioButton);
 			this.Controls.Add(this.panel1);
 			this.Controls.Add(this._titleLabel);
 			this.Controls.Add(this._encryptionTypeLabel);
@@ -173,5 +233,10 @@
         private System.Windows.Forms.Label _encryptionTypeLabel;
 		private System.Windows.Forms.Label _titleLabel;
 		private System.Windows.Forms.Panel panel1;
+		private System.Windows.Forms.RadioButton _appDataFolderRadioButton;
+		private System.Windows.Forms.RadioButton _sharedLocationRadioButton;
+		private System.Windows.Forms.TextBox _sharedLocationTextBox;
+		private System.Windows.Forms.Button _sharedLocationBrowseButton;
+		private System.Windows.Forms.Label _bookmarksLocationLabel;
     }
 }

@@ -32,6 +32,18 @@ namespace EasyConnect
 			set;
 		}
 
+		public bool UseSharedBookmarks
+		{
+			get;
+			set;
+		}
+
+		public string SharedBookmarksFileName
+		{
+			get;
+			set;
+		}
+
 		/// <summary>
 		/// Deserializes an instance of this class from an XML file on disk.
 		/// </summary>

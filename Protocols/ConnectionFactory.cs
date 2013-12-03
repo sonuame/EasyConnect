@@ -46,11 +46,6 @@ namespace EasyConnect.Protocols
 		protected static object _crypto;
 
 		/// <summary>
-		/// Type of encryption that should be used to protect passwords and other sensitive data in settings files.
-		/// </summary>
-		protected static EncryptionType _encryptionType;
-
-		/// <summary>
 		/// Static constructor.  Reads all .dll files in the application's directory and looks for types implementing <see cref="IProtocol"/>; instances of
 		/// these types are created and added to <see cref="_protocols"/>.
 		/// </summary>
@@ -91,17 +86,6 @@ namespace EasyConnect.Protocols
 		/// </summary>
 		private ConnectionFactory()
 		{
-		}
-
-		/// <summary>
-		/// Type of encryption that should be used to protect passwords and other sensitive data in settings files.
-		/// </summary>
-		public static EncryptionType EncryptionType
-		{
-			get
-			{
-				return _encryptionType;
-			}
 		}
 
 		/// <summary>
@@ -195,6 +179,41 @@ namespace EasyConnect.Protocols
 			return encryptedData;
 		}
 
+		public static void SetRijndaelEncryptor(SecureString encryptionKey)
+		{
+			if (encryptionKey == null)
+				throw new ArgumentException("The encryption password cannot be null.", "encryptionKey");
+
+			Rijndael rijndael = Rijndael.Create();
+			rijndael.KeySize = 256;
+
+			// Get the bytes for the password
+			IntPtr marshalledKeyBytes = Marshal.SecureStringToGlobalAllocAnsi(encryptionKey);
+			byte[] keyBytes = new byte[rijndael.KeySize / 8];
+
+			Marshal.Copy(marshalledKeyBytes, keyBytes, 0, Math.Min(keyBytes.Length, encryptionKey.Length));
+
+			// Set the encryption key to the key bytes and the IV to a predetermined string
+			rijndael.Key = keyBytes;
+			rijndael.IV = Convert.FromBase64String("QGWyKbe+W9H0mL2igm73jw==");
+
+			Marshal.ZeroFreeGlobalAllocAnsi(marshalledKeyBytes);
+
+			_crypto = rijndael;
+		}
+
+		public static void SetRsaEncryptor(string instanceID)
+		{
+			CspParameters parameters = new CspParameters
+				                           {
+					                           KeyContainerName = "EasyConnect" + (String.IsNullOrEmpty(instanceID)
+						                                                               ? ""
+						                                                               : " " + instanceID)
+				                           };
+
+			_crypto = new RSACryptoServiceProvider(parameters);
+		}
+
 		/// <summary>
 		/// Set the <see cref="EncryptionType"/> and <see cref="_crypto"/> objects.
 		/// </summary>
@@ -251,8 +270,6 @@ namespace EasyConnect.Protocols
 				default:
 					throw new ArgumentException("The encryption type " + encryptionType.ToString("G") + " is not supported.", "encryptionType");
 			}
-
-			_encryptionType = encryptionType;
 		}
 
 		/// <summary>

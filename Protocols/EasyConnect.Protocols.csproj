@@ -90,6 +90,7 @@
     </Compile>
     <Compile Include="BaseProtocol.cs" />
     <Compile Include="BookmarksFolder.cs" />
+    <Compile Include="EncryptedBookmarksContainer.cs" />
     <Compile Include="EncryptionType.cs" />
     <Compile Include="IConnection.cs" />
     <Compile Include="IConnectionForm.cs" />
