@@ -1,4 +1,4 @@
-﻿namespace EasyConnect.Protocols
+namespace EasyConnect.Protocols
 {
 	partial class ErrorMessageDisplayForm
 	{
