@@ -162,11 +162,12 @@
     <Compile Include="ConnectionWindow.Designer.cs">
       <DependentUpon>ConnectionWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="EncryptionSetupWindow.cs">
+    <Compile Include="IEncryptionConversionForm.cs" />
+    <Compile Include="InitialSetupWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="EncryptionSetupWindow.Designer.cs">
-      <DependentUpon>EncryptionSetupWindow.cs</DependentUpon>
+    <Compile Include="InitialSetupWindow.Designer.cs">
+      <DependentUpon>InitialSetupWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="FinishedForm.cs">
       <SubType>Form</SubType>
@@ -238,8 +239,11 @@
     <EmbeddedResource Include="ConnectionWindow.resx">
       <DependentUpon>ConnectionWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="EncryptionSetupWindow.resx">
-      <DependentUpon>EncryptionSetupWindow.cs</DependentUpon>
+    <EmbeddedResource Include="InitialSetupWindow.resx">
+      <DependentUpon>InitialSetupWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinishedForm.resx">
+      <DependentUpon>FinishedForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GlobalOptionsWindow.resx">
       <DependentUpon>GlobalOptionsWindow.cs</DependentUpon>

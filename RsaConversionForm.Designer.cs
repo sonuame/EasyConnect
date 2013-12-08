@@ -28,7 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.Security.SecureString secureString3 = new System.Security.SecureString();
+			System.Security.SecureString secureString1 = new System.Security.SecureString();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RsaConversionForm));
 			this._passwordLabel = new System.Windows.Forms.Label();
 			this._passwordTextBox = new SecurePasswordTextBox.SecureTextBox();
@@ -38,7 +38,7 @@
 			// _passwordLabel
 			// 
 			this._passwordLabel.AutoSize = true;
-			this._passwordLabel.Location = new System.Drawing.Point(11, 90);
+			this._passwordLabel.Location = new System.Drawing.Point(11, 107);
 			this._passwordLabel.Name = "_passwordLabel";
 			this._passwordLabel.Size = new System.Drawing.Size(56, 13);
 			this._passwordLabel.TabIndex = 5;
@@ -46,10 +46,10 @@
 			// 
 			// _passwordTextBox
 			// 
-			this._passwordTextBox.Location = new System.Drawing.Point(73, 87);
+			this._passwordTextBox.Location = new System.Drawing.Point(73, 104);
 			this._passwordTextBox.Name = "_passwordTextBox";
 			this._passwordTextBox.PasswordChar = '*';
-			this._passwordTextBox.SecureText = secureString3;
+			this._passwordTextBox.SecureText = secureString1;
 			this._passwordTextBox.Size = new System.Drawing.Size(146, 20);
 			this._passwordTextBox.TabIndex = 4;
 			// 
@@ -58,7 +58,7 @@
 			this._descriptionLabel.AutoSize = true;
 			this._descriptionLabel.Location = new System.Drawing.Point(12, 9);
 			this._descriptionLabel.Name = "_descriptionLabel";
-			this._descriptionLabel.Size = new System.Drawing.Size(550, 52);
+			this._descriptionLabel.Size = new System.Drawing.Size(550, 65);
 			this._descriptionLabel.TabIndex = 3;
 			this._descriptionLabel.Text = resources.GetString("_descriptionLabel.Text");
 			// 

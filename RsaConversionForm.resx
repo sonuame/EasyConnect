@@ -121,6 +121,7 @@
     <value>Sensititve data in your bookmarks file will be encrypted via RSA key containers saved to your local key store, which
 saves you from having to enter a password every time you use the application.  However, we need you to specify a
 sharing password that will be used to protect this key container in the event that you ever make the bookmarks file
-available to other people or need to open the bookmark file yourself on another machine.</value>
+available to other people or need to open the bookmark file yourself on another machine.  If you are opening a
+bookmarks file shared by another user, please get this sharing password from them.</value>
   </data>
 </root>

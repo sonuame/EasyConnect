@@ -245,6 +245,12 @@ namespace EasyConnect
 			AeroPeekEnabled = false;
 			bool convertingToRsa = false;
 
+			if (!Options.InitialSetupCompleted)
+			{
+				InitialSetupWindow initialSetupWindow = new InitialSetupWindow();
+				initialSetupWindow.ShowDialog(this);
+			}
+
 			// If the user hasn't formally selected an encryption type (either they're starting the application for the first time or are running a legacy
 			// version that explicitly used Rijndael), ask them if they want to use RSA
 			if (Options.EncryptionType == null)

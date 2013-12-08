@@ -1,6 +1,6 @@
 ﻿namespace EasyConnect
 {
-	partial class EncryptionSetupWindow
+	partial class InitialSetupWindow
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -28,7 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EncryptionSetupWindow));
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InitialSetupWindow));
 			this._finishButton = new System.Windows.Forms.Button();
 			this._nextButton = new System.Windows.Forms.Button();
 			this._previousButton = new System.Windows.Forms.Button();
@@ -46,6 +46,7 @@
 			this._finishButton.TabIndex = 0;
 			this._finishButton.Text = "Finish";
 			this._finishButton.UseVisualStyleBackColor = true;
+			this._finishButton.Click += new System.EventHandler(this._finishButton_Click);
 			// 
 			// _nextButton
 			// 
@@ -55,6 +56,7 @@
 			this._nextButton.TabIndex = 1;
 			this._nextButton.Text = "Next >";
 			this._nextButton.UseVisualStyleBackColor = true;
+			this._nextButton.Click += new System.EventHandler(this._nextButton_Click);
 			// 
 			// _previousButton
 			// 
@@ -65,6 +67,7 @@
 			this._previousButton.TabIndex = 2;
 			this._previousButton.Text = "< Previous";
 			this._previousButton.UseVisualStyleBackColor = true;
+			this._previousButton.Click += new System.EventHandler(this._previousButton_Click);
 			// 
 			// _containerPanel
 			// 
@@ -84,7 +87,7 @@
 			this._introLabel.Text = "We will now walk you through the setup process for encryption keys to protect you" +
     "r bookmarks file.  Click \"Next\" to \r\ncontinue.";
 			// 
-			// EncryptionSetupWindow
+			// InitialSetupWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -98,7 +101,7 @@
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.Name = "EncryptionSetupWindow";
+			this.Name = "InitialSetupWindow";
 			this.Text = "Encryption Setup";
 			this._containerPanel.ResumeLayout(false);
 			this._containerPanel.PerformLayout();

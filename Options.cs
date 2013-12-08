@@ -32,6 +32,12 @@ namespace EasyConnect
 			set;
 		}
 
+		public bool InitialSetupCompleted
+		{
+			get;
+			set;
+		}
+
 		public bool UseSharedBookmarks
 		{
 			get;
