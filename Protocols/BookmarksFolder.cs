@@ -4,6 +4,7 @@ using System.Security;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using EasyConnect.Common;
 using Stratman.Windows.Forms.TitleBarTabs;
 
 namespace EasyConnect.Protocols
@@ -114,7 +115,7 @@ namespace EasyConnect.Protocols
 
 				// Decrypt the password and put it into a secure string
 				SecureString password = new SecureString();
-				byte[] decryptedPassword = ConnectionFactory.Decrypt(Convert.FromBase64String(value));
+				byte[] decryptedPassword = CryptoUtilities.Decrypt(Convert.FromBase64String(value));
 
 				for (int i = 0; i < decryptedPassword.Length; i++)
 				{

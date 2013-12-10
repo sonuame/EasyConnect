@@ -10,6 +10,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
+using EasyConnect.Common;
 using EasyConnect.Protocols;
 using Stratman.Windows.Forms.TitleBarTabs;
 
@@ -132,27 +133,75 @@ namespace EasyConnect
 
 				using (XmlReader bookmarksReader = new XmlTextReader(BookmarksFileName))
 				{
-					if (_applicationForm.Options.UseSharedBookmarks && _applicationForm.Options.EncryptionType.Value == EncryptionType.Rsa)
-					{
-						string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
-						string bookmarksID = bookmarksReader.GetAttribute("BookmarksID");
+					string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
+					ICrypto crypto = null;
 
+					if (!String.IsNullOrEmpty(keyThumbprint))
+					{
 						CspParameters parameters = new CspParameters
-							                              {
-								                              ProviderName = "EasyConnect " + bookmarksID
-							                              };
-						RSACryptoServiceProvider crypto = new RSACryptoServiceProvider(parameters);
+							                           {
+								                           ProviderName = "EasyConnect Bookmarks " + keyThumbprint
+							                           };
+						RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider(parameters);
 						SHA256CryptoServiceProvider shaCrypto = new SHA256CryptoServiceProvider();
 
-						if (keyThumbprint != Convert.ToBase64String(shaCrypto.ComputeHash(new UnicodeEncoding().GetBytes(crypto.ToXmlString(true)))))
-							throw new Exception("No encryption key found for this bookmarks file.");
+						if (keyThumbprint != Convert.ToBase64String(shaCrypto.ComputeHash(new UnicodeEncoding().GetBytes(rsaCrypto.ToXmlString(true)))))
+						{
+							// It's the first time that this bookmarks file has been opened, so we don't have the matching key container in the store; decrypt
+							// it and import it
+							byte[] encryptedKeyContainer = Convert.FromBase64String(bookmarksReader.GetAttribute("EncryptedKeyContainer"));
 
-						bookmarksReader.Read();
+							MessageBox.Show(this, "Sharing Password Required", @"Since we don't have the encryption key for this bookmarks file in the local store, 
+you'll need to enter its sharing password, which you can get from the person who 
+created the bookmarks file.", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+							bool encryptionKeyImported = false;
+
+							while (!encryptionKeyImported)
+							{
+								PasswordWindow passwordWindow = new PasswordWindow();
+
+								if (passwordWindow.ShowDialog() != DialogResult.OK)
+									throw new Exception("Unable to open the bookmarks file.");
+
+								try
+								{
+									using (new CryptoContext(new RijndaelCrypto(passwordWindow.Password)))
+									{
+										rsaCrypto.ImportCspBlob(CryptoUtilities.Decrypt(encryptedKeyContainer));
+										encryptionKeyImported = true;
+									}
+								}
+
+								catch (CryptographicException)
+								{
+									MessageBox.Show(this, "Password Incorrect", "The sharing password that you provided was incorrect.");
+								}
+							}
+						}
+
+						crypto = new RsaCrypto("EasyConnect Bookmarks " + keyThumbprint);
 					}
+
+					else if (_applicationForm.Options.EncryptionType == EncryptionType.Rsa)
+					{
+						crypto = new RsaCrypto("EasyConnect");
+					}
+
+					bookmarksReader.Read();
 
 					// Deserialize the bookmarks folder structure from BookmarksFileName; BookmarksFolder.ReadXml() will call itself recursively to deserialize
 					// child folders, so all we have to do is start the deserialization process from the root folder
-					_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
+					if (crypto != null)
+					{
+						using (new CryptoContext(crypto))
+						{
+							_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
+						}
+					}
+
+					else
+						_rootFolder = (BookmarksFolder)bookmarksSerializer.Deserialize(bookmarksReader);
 				}
 			}
 		}
@@ -548,70 +597,6 @@ namespace EasyConnect
 			{
 				bookmarksSerializer.Serialize(bookmarksWriter, _rootFolder);
 				bookmarksWriter.Flush();
-			}
-		}
-
-		/// <summary>
-		/// Serializes the bookmarks to disk after first removing any password-sensitive information.  This is accomplished by first calling
-		/// <see cref="BookmarksFolder.CloneAnon"/> on <see cref="RootFolder"/> and then serializing it.
-		/// </summary>
-		/// <param name="path">Path of the file that we are to serialize to.</param>
-		public void Export(string path)
-		{
-			FileInfo destinationFile = new FileInfo(path);
-			XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
-
-			// ReSharper disable AssignNullToNotNullAttribute
-			Directory.CreateDirectory(destinationFile.DirectoryName);
-			// ReSharper restore AssignNullToNotNullAttribute
-
-			object clonedFolder = _rootFolder.CloneAnon();
-
-			using (XmlWriter bookmarksWriter = new XmlTextWriter(path, new UnicodeEncoding()))
-			{
-				bookmarksSerializer.Serialize(bookmarksWriter, clonedFolder);
-				bookmarksWriter.Flush();
-			}
-		}
-
-		/// <summary>
-		/// Imports bookmarks previously saved via a call to <see cref="Export"/> and overwrites any existing bookmarks data.
-		/// </summary>
-		/// <param name="path">Path of the file that we're loading from.</param>
-		public void Import(string path)
-		{
-			//ISSUE: Display shows old and new Bookmark items
-			//ISSUE: Dialog shows truncated suggested file name
-
-			if (
-				MessageBox.Show(
-					"This will erase any currently saved bookmarks and import the contents of the selected file. Do you wish to continue?",
-					"Continue with import?", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK)
-			{
-				if (File.Exists(path))
-				{
-					XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
-
-					using (XmlReader bookmarksReader = new XmlTextReader(path))
-					{
-						BookmarksFolder importedRootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
-
-						// Set the handler methods for changing the bookmarks or child folders; these are responsible for updating the tree view and list view 
-						// UI when items are added or removed from the bookmarks or child folders collections
-						importedRootFolder.Bookmarks.CollectionModified += Bookmarks_CollectionModified;
-						importedRootFolder.ChildFolders.CollectionModified += ChildFolders_CollectionModified;
-
-						_rootFolder = importedRootFolder;
-						_folderTreeNodes[_bookmarksFoldersTreeView.Nodes[0]] = _rootFolder;
-
-						// Call Bookmarks_CollectionModified and ChildFolders_CollectionModified recursively through the folder structure to "simulate" 
-						// bookmarks and folders being added to the collection so that the initial UI state for the tree view can be created
-						InitializeTreeView(_rootFolder);
-					}
-
-					_bookmarksFoldersTreeView.Nodes[0].Expand();
-					Save();
-				}
 			}
 		}
 
@@ -1320,30 +1305,6 @@ namespace EasyConnect
 
 			if (_listViewFolders.FirstOrDefault(kvp => kvp.Value == _contextMenuItem as BookmarksFolder).Value != null)
 				_listViewFolders.Single(kvp => kvp.Value == _contextMenuItem as BookmarksFolder).Key.ForeColor = Color.Gray;
-		}
-
-		/// <summary>
-		/// Handler method that's called when the "Export" menu item in the context menu that appears when the user right-clicks on a folder in 
-		/// <see cref="_bookmarksFoldersTreeView"/>.  Opens a <see cref="_bookmarkExportDialog"/> and then calls <see cref="Export"/>.
-		/// </summary>
-		/// <param name="sender">Object from which this event originated.</param>
-		/// <param name="e">Arguments associated with this event.</param>
-		private void _exportBookMarkMenuitem_Click(object sender, EventArgs e)
-		{
-			_bookmarkExportDialog.ShowDialog();
-			Export(_bookmarkExportDialog.FileName);
-		}
-
-		/// <summary>
-		/// Handler method that's called when the "Import" menu item in the context menu that appears when the user right-clicks on a folder in 
-		/// <see cref="_bookmarksFoldersTreeView"/>.  Opens a <see cref="_bookmarkImportDialog"/> and then calls <see cref="Import"/>.
-		/// </summary>
-		/// <param name="sender">Object from which this event originated.</param>
-		/// <param name="e">Arguments associated with this event.</param>
-		private void _importBookmarkMenuItem_Click(object sender, EventArgs e)
-		{
-			_bookmarkImportDialog.ShowDialog();
-			Import(_bookmarkImportDialog.FileName);
 		}
 
 		/// <summary>

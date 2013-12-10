@@ -69,7 +69,6 @@ namespace EasyConnect
 			this._bookmarksListView = new System.Windows.Forms.ListView();
 			this._bookmarkNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this._bookmarkUriColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this._listViewImageList = new System.Windows.Forms.ImageList(this.components);
 			this._folderContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this._folderOpenAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this._folderOpenAllNewWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -87,9 +86,7 @@ namespace EasyConnect
 			this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
 			this._addBookmarkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this._addFolderMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
-			this._exportBookMarkMenuitem = new System.Windows.Forms.ToolStripMenuItem();
-			this._importBookmarkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._listViewImageList = new System.Windows.Forms.ImageList(this.components);
 			this._bookmarkContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this._openBookmarkNewTabMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this._openBookmarkNewWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -207,12 +204,6 @@ namespace EasyConnect
 			this._bookmarkUriColumnHeader.Text = "URI";
 			this._bookmarkUriColumnHeader.Width = 155;
 			// 
-			// _listViewImageList
-			// 
-			this._listViewImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("_listViewImageList.ImageStream")));
-			this._listViewImageList.TransparentColor = System.Drawing.Color.Transparent;
-			this._listViewImageList.Images.SetKeyName(0, "Folder.png");
-			// 
 			// _folderContextMenu
 			// 
 			this._folderContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -231,13 +222,10 @@ namespace EasyConnect
             this._deleteFolderMenuItem,
             this.toolStripSeparator4,
             this._addBookmarkMenuItem,
-            this._addFolderMenuItem,
-            this.toolStripSeparator8,
-            this._exportBookMarkMenuitem,
-            this._importBookmarkMenuItem});
+            this._addFolderMenuItem});
 			this._folderContextMenu.Name = "_folderContextMenu";
 			this._folderContextMenu.ShowImageMargin = false;
-			this._folderContextMenu.Size = new System.Drawing.Size(248, 348);
+			this._folderContextMenu.Size = new System.Drawing.Size(248, 298);
 			this._folderContextMenu.Closed += new System.Windows.Forms.ToolStripDropDownClosedEventHandler(this._folderContextMenu_Closed);
 			this._folderContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this._folderContextMenu_Opening);
 			// 
@@ -343,24 +331,11 @@ namespace EasyConnect
 			this._addFolderMenuItem.Text = "Add folder...";
 			this._addFolderMenuItem.Click += new System.EventHandler(this._addFolderMenuItem_Click);
 			// 
-			// toolStripSeparator8
+			// _listViewImageList
 			// 
-			this.toolStripSeparator8.Name = "toolStripSeparator8";
-			this.toolStripSeparator8.Size = new System.Drawing.Size(244, 6);
-			// 
-			// _exportBookMarkMenuitem
-			// 
-			this._exportBookMarkMenuitem.Name = "_exportBookMarkMenuitem";
-			this._exportBookMarkMenuitem.Size = new System.Drawing.Size(247, 22);
-			this._exportBookMarkMenuitem.Text = "Export";
-			this._exportBookMarkMenuitem.Click += new System.EventHandler(this._exportBookMarkMenuitem_Click);
-			// 
-			// _importBookmarkMenuItem
-			// 
-			this._importBookmarkMenuItem.Name = "_importBookmarkMenuItem";
-			this._importBookmarkMenuItem.Size = new System.Drawing.Size(247, 22);
-			this._importBookmarkMenuItem.Text = "Import";
-			this._importBookmarkMenuItem.Click += new System.EventHandler(this._importBookmarkMenuItem_Click);
+			this._listViewImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("_listViewImageList.ImageStream")));
+			this._listViewImageList.TransparentColor = System.Drawing.Color.Transparent;
+			this._listViewImageList.Images.SetKeyName(0, "Folder.png");
 			// 
 			// _bookmarkContextMenu
 			// 
@@ -484,10 +459,7 @@ namespace EasyConnect
 
         private ToolStripMenuItem copyToolStripMenuItem;
         private ToolStripMenuItem renameToolStripMenuItem;
-        private SaveFileDialog _bookmarkExportDialog;
-        private ToolStripMenuItem _exportBookMarkMenuitem;
-        private ToolStripSeparator toolStripSeparator8;
-        private ToolStripMenuItem _importBookmarkMenuItem;
+		private SaveFileDialog _bookmarkExportDialog;
         private OpenFileDialog _bookmarkImportDialog;
         private ToolStripSeparator toolStripSeparator9;
         private ImageList _dragImageList;

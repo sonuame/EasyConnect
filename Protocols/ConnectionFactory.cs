@@ -41,7 +41,7 @@ namespace EasyConnect.Protocols
 		protected static string _defaultProtocolPrefix = null;
 
 		/// <summary>
-		/// Crypto object used in the <see cref="Encrypt(byte[])"/> and <see cref="Decrypt"/> methods.
+		/// Crypto object used in the <see cref="Encrypt(byte[])"/> method.
 		/// </summary>
 		protected static object _crypto;
 
@@ -97,35 +97,6 @@ namespace EasyConnect.Protocols
 			{
 				return _crypto != null;
 			}
-		}
-
-		/// <summary>
-		/// Decrypts <paramref name="data"/> by using the <see cref="_crypto"/> currently set.
-		/// </summary>
-		/// <param name="data">Data that we are to decrypt.</param>
-		/// <returns>Decrypted data.</returns>
-		public static byte[] Decrypt(byte[] data)
-		{
-			// ReSharper disable CanBeReplacedWithTryCastAndCheckForNull
-			if (_crypto is SymmetricAlgorithm)
-			{
-				byte[] decryptedData = new byte[data.Length];
-				MemoryStream memoryStream = new MemoryStream(data, 0, data.Length);
-				CryptoStream cryptoStream = new CryptoStream(memoryStream, ((SymmetricAlgorithm) _crypto).CreateDecryptor(), CryptoStreamMode.Read);
-
-				cryptoStream.Read(decryptedData, 0, decryptedData.Length);
-				cryptoStream.Close();
-				memoryStream.Close();
-
-				return decryptedData;
-			}
-
-			else if (_crypto is RSACryptoServiceProvider)
-				return ((RSACryptoServiceProvider) _crypto).Decrypt(data, true);
-
-			else
-				throw new NotSupportedException("The crypto object " + _crypto.GetType().Name + " is not supported.");
-			// ReSharper restore CanBeReplacedWithTryCastAndCheckForNull
 		}
 
 		/// <summary>

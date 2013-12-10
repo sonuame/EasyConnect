@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using EasyConnect.Common;
 using EasyConnect.Protocols;
 using EasyConnect.Protocols.Rdp;
 using Stratman.Windows.Forms.TitleBarTabs;
@@ -68,8 +69,11 @@ namespace EasyConnect
 				XmlSerializer historySerializer = new XmlSerializer(typeof (List<HistoricalConnection>));
 				List<HistoricalConnection> historicalConnections = null;
 
+				using (new CryptoContext(new RsaCrypto("EasyConnect")))
 				using (XmlReader historyReader = new XmlTextReader(_historyFileName))
+				{
 					historicalConnections = (List<HistoricalConnection>) historySerializer.Deserialize(historyReader);
+				}
 
 				foreach (HistoricalConnection historyEntry in historicalConnections)
 					AddToHistory(historyEntry);
@@ -189,6 +193,7 @@ namespace EasyConnect
 				_connections.Remove(connection.Key);
 			}
 
+			using (new CryptoContext(new RsaCrypto("EasyConnect")))
 			using (XmlWriter historyWriter = new XmlTextWriter(_historyFileName, new UnicodeEncoding()))
 			{
 				historySerializer.Serialize(historyWriter, _connections.Values.ToList());
