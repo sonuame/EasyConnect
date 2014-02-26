@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
@@ -127,6 +128,8 @@ namespace EasyConnect
 
 		protected EncryptedBookmarks _encryptionContainer = null;
 
+		protected FileSystemWatcher _bookmarksFileWatcher = null;
+
 		public new void Load()
 		{
 			_bookmarksFoldersTreeView.Nodes[0].Nodes.Clear();
@@ -146,6 +149,36 @@ namespace EasyConnect
 			InitializeTreeView(_rootFolder);
 
 			_bookmarksFoldersTreeView.Nodes[0].Expand();
+
+			if (_bookmarksFileWatcher != null)
+				_bookmarksFileWatcher.EnableRaisingEvents = false;
+
+			_bookmarksFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(BookmarksFileName), Path.GetFileName(BookmarksFileName));
+			_bookmarksFileWatcher.Changed += _bookmarksFileWatcher_Changed;
+			_bookmarksFileWatcher.EnableRaisingEvents = true;
+		}
+
+		void _bookmarksFileWatcher_Changed(object sender, FileSystemEventArgs e)
+		{
+			FileStream fileStream = null;
+
+			while (fileStream == null)
+			{
+				try
+				{
+					fileStream = File.Open(BookmarksFileName, FileMode.Open, FileAccess.Read, FileShare.None);
+				}
+
+				// Catch the IOException that will be thrown when we fail to open the file in exclusive mode
+				catch (IOException)
+				{
+					Thread.Sleep(100);
+				}
+			}
+
+			fileStream.Dispose();
+
+			Invoke(new Action(Load));
 		}
 
 		protected void LoadBookmarksFromFile()
@@ -582,6 +615,8 @@ namespace EasyConnect
 		/// </summary>
 		public void Save()
 		{
+			_bookmarksFileWatcher.EnableRaisingEvents = false;
+
 			if (_encryptionContainer != null)
 				_encryptionContainer.Save(BookmarksFileName);
 
@@ -600,6 +635,8 @@ namespace EasyConnect
 					bookmarksWriter.Flush();
 				}
 			}
+
+			_bookmarksFileWatcher.EnableRaisingEvents = true;
 		}
 
 		/// <summary>
