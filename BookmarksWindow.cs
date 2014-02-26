@@ -25,7 +25,7 @@ namespace EasyConnect
 		/// <summary>
 		/// Full path to the file where bookmarks data is serialized.
 		/// </summary>
-		protected string BookmarksFileName
+		public string BookmarksFileName
 		{
 			get
 			{
@@ -127,17 +127,38 @@ namespace EasyConnect
 
 		protected EncryptedBookmarks _encryptionContainer = null;
 
-		protected void Load()
+		public new void Load()
+		{
+			_bookmarksFoldersTreeView.Nodes[0].Nodes.Clear();
+			_folderTreeNodes.Clear();
+
+			LoadBookmarksFromFile();
+
+			// Set the handler methods for changing the bookmarks or child folders; these are responsible for updating the tree view and list view UI when
+			// items are added or removed from the bookmarks or child folders collections
+			_rootFolder.Bookmarks.CollectionModified += Bookmarks_CollectionModified;
+			_rootFolder.ChildFolders.CollectionModified += ChildFolders_CollectionModified;
+
+			_folderTreeNodes[_bookmarksFoldersTreeView.Nodes[0]] = _rootFolder;
+
+			// Call Bookmarks_CollectionModified and ChildFolders_CollectionModified recursively through the folder structure to "simulate" bookmarks and
+			// folders being added to the collection so that the initial UI state for the tree view can be created
+			InitializeTreeView(_rootFolder);
+
+			_bookmarksFoldersTreeView.Nodes[0].Expand();
+		}
+
+		protected void LoadBookmarksFromFile()
 		{
 			if (File.Exists(BookmarksFileName))
 			{
-				Type rootType = null;
-
 				using (XmlReader bookmarksReader = new XmlTextReader(BookmarksFileName))
 				{
-					// Read past the XML preprocessor directive to the root node
-					bookmarksReader.Read();
-					bookmarksReader.Read();
+					// Read to the root node
+					while (bookmarksReader.NodeType != XmlNodeType.Element)
+						bookmarksReader.Read();
+
+					Type rootType = null;
 
 					switch (bookmarksReader.LocalName)
 					{
@@ -207,21 +228,6 @@ namespace EasyConnect
 			_bookmarksFoldersTreeView.Sorted = true;
 			_bookmarksListView.ListViewItemSorter = new BookmarksListViewComparer();
 
-			Load();
-
-			// Set the handler methods for changing the bookmarks or child folders; these are responsible for updating the tree view and list view UI when
-			// items are added or removed from the bookmarks or child folders collections
-			_rootFolder.Bookmarks.CollectionModified += Bookmarks_CollectionModified;
-			_rootFolder.ChildFolders.CollectionModified += ChildFolders_CollectionModified;
-
-			_folderTreeNodes[_bookmarksFoldersTreeView.Nodes[0]] = _rootFolder;
-
-			// Call Bookmarks_CollectionModified and ChildFolders_CollectionModified recursively through the folder structure to "simulate" bookmarks and
-			// folders being added to the collection so that the initial UI state for the tree view can be created
-			InitializeTreeView(_rootFolder);
-
-			_bookmarksFoldersTreeView.Nodes[0].Expand();
-
 			foreach (IProtocol protocol in ConnectionFactory.GetProtocols())
 			{
 				// Get the icon for each protocol type and add an entry for it to the "Add bookmark" menu item
@@ -235,6 +241,8 @@ namespace EasyConnect
 					protocol.ProtocolTitle, null, (sender, args) => _addBookmarkMenuItem_Click(currentProtocol));
 				_addBookmarkMenuItem.DropDownItems.Add(protocolMenuItem);
 			}
+
+			Load();
 		}
 
 		/// <summary>

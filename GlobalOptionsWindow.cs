@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Windows.Forms;
@@ -66,7 +67,12 @@ namespace EasyConnect
 				                                              : null;
 
 			_parentTabs.Options.Save();
-			_parentTabs.Bookmarks.Save();
+
+			if (!File.Exists(_parentTabs.Bookmarks.BookmarksFileName))
+				_parentTabs.Bookmarks.Save();
+
+			else
+				_parentTabs.Bookmarks.Load();
 		}
 
 		/// <summary>
