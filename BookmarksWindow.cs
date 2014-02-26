@@ -132,6 +132,23 @@ namespace EasyConnect
 
 		public new void Load()
 		{
+			List<string> expandedFolders = new List<string>();
+			GetExpandedFolders("", _bookmarksFoldersTreeView.Nodes[0], expandedFolders);
+
+			string selectedFolderPath = "";
+			TreeNode selectedNode = _bookmarksFoldersTreeView.SelectedNode;
+
+			if (selectedNode != null)
+			{
+				while (selectedNode != null && selectedNode.Text != "Bookmarks")
+				{
+					selectedFolderPath = selectedNode.Text + (selectedFolderPath != ""
+						                                          ? "/" + selectedFolderPath
+						                                          : "");
+					selectedNode = selectedNode.Parent;
+				}
+			}
+
 			_bookmarksFoldersTreeView.Nodes[0].Nodes.Clear();
 			_folderTreeNodes.Clear();
 
@@ -150,12 +167,93 @@ namespace EasyConnect
 
 			_bookmarksFoldersTreeView.Nodes[0].Expand();
 
+			foreach (string expandedFolder in expandedFolders)
+				ExpandFolder(expandedFolder, _bookmarksFoldersTreeView.Nodes[0]);
+
+			if (selectedFolderPath != "")
+			{
+				TreeNode currentParent = _bookmarksFoldersTreeView.Nodes[0];
+				bool foundItem = true;
+
+				while (selectedFolderPath.Contains("/"))
+				{
+					foundItem = false;
+
+					foreach (TreeNode childNode in currentParent.Nodes)
+					{
+						if (childNode.Text == selectedFolderPath.Substring(0, selectedFolderPath.IndexOf("/")))
+						{
+							currentParent = childNode;
+							selectedFolderPath = selectedFolderPath.Substring(selectedFolderPath.IndexOf("/") + 1);
+							foundItem = true;
+
+							break;
+						}
+					}
+
+					if (!foundItem)
+						break;
+				}
+
+				if (foundItem)
+				{
+					foreach (TreeNode childNode in currentParent.Nodes)
+					{
+						if (childNode.Text == selectedFolderPath)
+						{
+							_bookmarksFoldersTreeView.SelectedNode = childNode;
+							break;
+						}
+					}
+				}
+
+				else
+					_bookmarksFoldersTreeView.SelectedNode = _bookmarksFoldersTreeView.Nodes[0];
+			}
+
+			else
+				_bookmarksFoldersTreeView.SelectedNode = _bookmarksFoldersTreeView.Nodes[0];
+
 			if (_bookmarksFileWatcher != null)
 				_bookmarksFileWatcher.EnableRaisingEvents = false;
 
 			_bookmarksFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(BookmarksFileName), Path.GetFileName(BookmarksFileName));
 			_bookmarksFileWatcher.Changed += _bookmarksFileWatcher_Changed;
 			_bookmarksFileWatcher.EnableRaisingEvents = true;
+		}
+
+		protected void ExpandFolder(string folderPath, TreeNode currentNode)
+		{
+			string folderName = folderPath.Contains("/")
+				                    ? folderPath.Substring(0, folderPath.IndexOf("/"))
+				                    : folderPath;
+
+			foreach (TreeNode childNode in currentNode.Nodes)
+			{
+				if (childNode.Text == folderName)
+				{
+					childNode.Expand();
+
+					if (folderPath.Contains("/"))
+					{
+						ExpandFolder(folderPath.Substring(folderPath.IndexOf("/") + 1), childNode);
+					}
+
+					break;
+				}
+			}
+		}
+
+		protected void GetExpandedFolders(string currentPath, TreeNode currentNode, List<string> expandedFolders)
+		{
+			foreach (TreeNode childNode in currentNode.Nodes)
+			{
+				if (childNode.IsExpanded)
+				{
+					expandedFolders.Add(currentPath + childNode.Text);
+					GetExpandedFolders(currentPath + childNode.Text + "/", childNode, expandedFolders);
+				}
+			}
 		}
 
 		void _bookmarksFileWatcher_Changed(object sender, FileSystemEventArgs e)
