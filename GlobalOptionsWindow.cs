@@ -156,5 +156,14 @@ namespace EasyConnect
 			_sharedLocationTextBox.Enabled = !_appDataFolderRadioButton.Checked;
 			_sharedLocationBrowseButton.Enabled = !_appDataFolderRadioButton.Checked;
 		}
+
+		private void _sharedLocationBrowseButton_Click(object sender, EventArgs e)
+		{
+			if (!String.IsNullOrEmpty(_sharedLocationTextBox.Text))
+				_sharedLocationFileDialog.FileName = _sharedLocationTextBox.Text;
+
+			if (_sharedLocationFileDialog.ShowDialog(this) == DialogResult.OK)
+				_sharedLocationTextBox.Text = _sharedLocationFileDialog.FileName;
+		}
 	}
 }

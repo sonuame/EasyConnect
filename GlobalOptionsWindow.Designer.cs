@@ -42,6 +42,7 @@
 			this._sharedLocationTextBox = new System.Windows.Forms.TextBox();
 			this._sharedLocationBrowseButton = new System.Windows.Forms.Button();
 			this._bookmarksLocationLabel = new System.Windows.Forms.Label();
+			this._sharedLocationFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.SuspendLayout();
 			// 
 			// _defaultProtocolLabel
@@ -145,7 +146,7 @@
 			// _appDataFolderRadioButton
 			// 
 			this._appDataFolderRadioButton.AutoSize = true;
-			this._appDataFolderRadioButton.Location = new System.Drawing.Point(227, 176);
+			this._appDataFolderRadioButton.Location = new System.Drawing.Point(227, 179);
 			this._appDataFolderRadioButton.Name = "_appDataFolderRadioButton";
 			this._appDataFolderRadioButton.Size = new System.Drawing.Size(142, 17);
 			this._appDataFolderRadioButton.TabIndex = 75;
@@ -157,18 +158,18 @@
 			// _sharedLocationRadioButton
 			// 
 			this._sharedLocationRadioButton.AutoSize = true;
-			this._sharedLocationRadioButton.Location = new System.Drawing.Point(228, 200);
+			this._sharedLocationRadioButton.Location = new System.Drawing.Point(228, 203);
 			this._sharedLocationRadioButton.Name = "_sharedLocationRadioButton";
-			this._sharedLocationRadioButton.Size = new System.Drawing.Size(107, 17);
+			this._sharedLocationRadioButton.Size = new System.Drawing.Size(110, 17);
 			this._sharedLocationRadioButton.TabIndex = 76;
 			this._sharedLocationRadioButton.TabStop = true;
-			this._sharedLocationRadioButton.Text = "A shared location";
+			this._sharedLocationRadioButton.Text = "A shared location:";
 			this._sharedLocationRadioButton.UseVisualStyleBackColor = true;
 			// 
 			// _sharedLocationTextBox
 			// 
 			this._sharedLocationTextBox.Enabled = false;
-			this._sharedLocationTextBox.Location = new System.Drawing.Point(245, 226);
+			this._sharedLocationTextBox.Location = new System.Drawing.Point(246, 229);
 			this._sharedLocationTextBox.Name = "_sharedLocationTextBox";
 			this._sharedLocationTextBox.Size = new System.Drawing.Size(191, 20);
 			this._sharedLocationTextBox.TabIndex = 77;
@@ -176,12 +177,13 @@
 			// _sharedLocationBrowseButton
 			// 
 			this._sharedLocationBrowseButton.Enabled = false;
-			this._sharedLocationBrowseButton.Location = new System.Drawing.Point(441, 224);
+			this._sharedLocationBrowseButton.Location = new System.Drawing.Point(442, 227);
 			this._sharedLocationBrowseButton.Name = "_sharedLocationBrowseButton";
 			this._sharedLocationBrowseButton.Size = new System.Drawing.Size(24, 23);
 			this._sharedLocationBrowseButton.TabIndex = 78;
 			this._sharedLocationBrowseButton.Text = "...";
 			this._sharedLocationBrowseButton.UseVisualStyleBackColor = true;
+			this._sharedLocationBrowseButton.Click += new System.EventHandler(this._sharedLocationBrowseButton_Click);
 			// 
 			// _bookmarksLocationLabel
 			// 
@@ -192,6 +194,11 @@
 			this._bookmarksLocationLabel.TabIndex = 79;
 			this._bookmarksLocationLabel.Text = "Bookmarks location:";
 			this._bookmarksLocationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// _sharedBookmarksFileDialog
+			// 
+			this._sharedLocationFileDialog.CheckFileExists = false;
+			this._sharedLocationFileDialog.FileName = "Bookmarks.xml";
 			// 
 			// GlobalOptionsWindow
 			// 
@@ -239,5 +246,6 @@
 		private System.Windows.Forms.TextBox _sharedLocationTextBox;
 		private System.Windows.Forms.Button _sharedLocationBrowseButton;
 		private System.Windows.Forms.Label _bookmarksLocationLabel;
+		private System.Windows.Forms.OpenFileDialog _sharedLocationFileDialog;
     }
 }
