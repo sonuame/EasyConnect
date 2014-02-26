@@ -60,7 +60,13 @@ namespace EasyConnect
 
 			_parentTabs.Options.AutoHideToolbar = _autoHideCheckbox.Checked;
 			_parentTabs.Options.EncryptionType = (EncryptionType) Enum.Parse(typeof (EncryptionType), ((ListItem) _encryptionTypeDropdown.SelectedItem).Value);
+			_parentTabs.Options.UseSharedBookmarks = _sharedLocationRadioButton.Checked;
+			_parentTabs.Options.SharedBookmarksFileName = _sharedLocationRadioButton.Checked
+				                                              ? _sharedLocationTextBox.Text
+				                                              : null;
+
 			_parentTabs.Options.Save();
+			_parentTabs.Bookmarks.Save();
 		}
 
 		/// <summary>
