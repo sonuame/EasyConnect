@@ -90,7 +90,7 @@
     </Compile>
     <Compile Include="BaseProtocol.cs" />
     <Compile Include="BookmarksFolder.cs" />
-    <Compile Include="EncryptedBookmarksContainer.cs" />
+    <Compile Include="EncryptedBookmarks.cs" />
     <Compile Include="EncryptionType.cs" />
     <Compile Include="IConnection.cs" />
     <Compile Include="IConnectionForm.cs" />
@@ -115,9 +115,9 @@
     <EmbeddedResource Include="BaseConnectionForm.resx">
       <DependentUpon>BaseConnectionForm.cs</DependentUpon>
     </EmbeddedResource>
-	<EmbeddedResource Include="ErrorMessageDisplayForm.resx">
-	  <DependentUpon>ErrorMessageDisplayForm.cs</DependentUpon>
-	</EmbeddedResource>
+    <EmbeddedResource Include="ErrorMessageDisplayForm.resx">
+      <DependentUpon>ErrorMessageDisplayForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

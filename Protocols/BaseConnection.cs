@@ -134,7 +134,7 @@ namespace EasyConnect.Protocols
 				if (Password == null || Password.Length == 0)
 					return null;
 
-				return Convert.ToBase64String(ConnectionFactory.Encrypt(_password));
+				return Convert.ToBase64String(CryptoUtilities.Encrypt(_password));
 			}
 
 			set

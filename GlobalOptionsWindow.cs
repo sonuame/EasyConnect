@@ -91,6 +91,17 @@ namespace EasyConnect
 			// ReSharper disable PossibleInvalidOperationException
 			_encryptionTypeDropdown.SelectedItem = items.First(i => i.Value == _parentTabs.Options.EncryptionType.Value.ToString("G"));
 			// ReSharper restore PossibleInvalidOperationException
+
+			if (!_parentTabs.Options.UseSharedBookmarks)
+				_appDataFolderRadioButton.Checked = true;
+
+			else
+			{
+				_sharedLocationRadioButton.Checked = true;
+				_sharedLocationTextBox.Text = _parentTabs.Options.SharedBookmarksFileName;
+				_sharedLocationTextBox.Enabled = true;
+				_sharedLocationBrowseButton.Enabled = true;
+			}
 		}
 
 		/// <summary>
@@ -138,6 +149,12 @@ namespace EasyConnect
 				get;
 				set;
 			}
+		}
+
+		private void _appDataFolderRadioButton_CheckedChanged(object sender, EventArgs e)
+		{
+			_sharedLocationTextBox.Enabled = !_appDataFolderRadioButton.Checked;
+			_sharedLocationBrowseButton.Enabled = !_appDataFolderRadioButton.Checked;
 		}
 	}
 }

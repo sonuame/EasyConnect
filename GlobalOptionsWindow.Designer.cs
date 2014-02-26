@@ -152,6 +152,7 @@
 			this._appDataFolderRadioButton.TabStop = true;
 			this._appDataFolderRadioButton.Text = "User\'s AppData directory";
 			this._appDataFolderRadioButton.UseVisualStyleBackColor = true;
+			this._appDataFolderRadioButton.CheckedChanged += new System.EventHandler(this._appDataFolderRadioButton_CheckedChanged);
 			// 
 			// _sharedLocationRadioButton
 			// 

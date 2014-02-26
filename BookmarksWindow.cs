@@ -125,83 +125,71 @@ namespace EasyConnect
 		/// </summary>
 		protected TreeNode _treeViewDropTarget = null;
 
+		protected EncryptedBookmarks _encryptionContainer = null;
+
 		protected void Load()
 		{
 			if (File.Exists(BookmarksFileName))
 			{
-				XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
+				Type rootType = null;
 
 				using (XmlReader bookmarksReader = new XmlTextReader(BookmarksFileName))
 				{
-					string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
-					ICrypto crypto = null;
-
-					if (!String.IsNullOrEmpty(keyThumbprint))
-					{
-						CspParameters parameters = new CspParameters
-							                           {
-								                           ProviderName = "EasyConnect Bookmarks " + keyThumbprint
-							                           };
-						RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider(parameters);
-						SHA256CryptoServiceProvider shaCrypto = new SHA256CryptoServiceProvider();
-
-						if (keyThumbprint != Convert.ToBase64String(shaCrypto.ComputeHash(new UnicodeEncoding().GetBytes(rsaCrypto.ToXmlString(true)))))
-						{
-							// It's the first time that this bookmarks file has been opened, so we don't have the matching key container in the store; decrypt
-							// it and import it
-							byte[] encryptedKeyContainer = Convert.FromBase64String(bookmarksReader.GetAttribute("EncryptedKeyContainer"));
-
-							MessageBox.Show(this, "Sharing Password Required", @"Since we don't have the encryption key for this bookmarks file in the local store, 
-you'll need to enter its sharing password, which you can get from the person who 
-created the bookmarks file.", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-							bool encryptionKeyImported = false;
-
-							while (!encryptionKeyImported)
-							{
-								PasswordWindow passwordWindow = new PasswordWindow();
-
-								if (passwordWindow.ShowDialog() != DialogResult.OK)
-									throw new Exception("Unable to open the bookmarks file.");
-
-								try
-								{
-									using (new CryptoContext(new RijndaelCrypto(passwordWindow.Password)))
-									{
-										rsaCrypto.ImportCspBlob(CryptoUtilities.Decrypt(encryptedKeyContainer));
-										encryptionKeyImported = true;
-									}
-								}
-
-								catch (CryptographicException)
-								{
-									MessageBox.Show(this, "Password Incorrect", "The sharing password that you provided was incorrect.");
-								}
-							}
-						}
-
-						crypto = new RsaCrypto("EasyConnect Bookmarks " + keyThumbprint);
-					}
-
-					else if (_applicationForm.Options.EncryptionType == EncryptionType.Rsa)
-					{
-						crypto = new RsaCrypto("EasyConnect");
-					}
-
+					// Read past the XML preprocessor directive to the root node
+					bookmarksReader.Read();
 					bookmarksReader.Read();
 
-					// Deserialize the bookmarks folder structure from BookmarksFileName; BookmarksFolder.ReadXml() will call itself recursively to deserialize
-					// child folders, so all we have to do is start the deserialization process from the root folder
-					if (crypto != null)
+					switch (bookmarksReader.LocalName)
 					{
-						using (new CryptoContext(crypto))
-						{
-							_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
-						}
+						case "BookmarksFolder":
+							rootType = typeof (BookmarksFolder);
+							break;
+
+						case "EncryptedBookmarks":
+							rootType = typeof (EncryptedBookmarks);
+							break;
+
+						default:
+							throw new Exception("Unrecognized bookmarks file type.  Root node name was " + bookmarksReader.LocalName);
+					}
+
+					ICrypto crypto = null;
+
+					if (rootType == typeof (EncryptedBookmarks))
+					{
+						_encryptionContainer = EncryptedBookmarks.Load(
+							this, bookmarksReader, () =>
+								{
+									PasswordWindow passwordWindow = new PasswordWindow();
+
+									if (passwordWindow.ShowDialog() != DialogResult.OK)
+										throw new Exception("Unable to open the bookmarks file.");
+
+									return passwordWindow.Password;
+								});
+						_rootFolder = _encryptionContainer.RootFolder;
 					}
 
 					else
-						_rootFolder = (BookmarksFolder)bookmarksSerializer.Deserialize(bookmarksReader);
+					{
+						if (_applicationForm.Options.EncryptionType == EncryptionType.Rsa)
+							crypto = new RsaCrypto("EasyConnect");
+
+						XmlSerializer bookmarksSerializer = new XmlSerializer(rootType);
+
+						// Deserialize the bookmarks folder structure from BookmarksFileName; BookmarksFolder.ReadXml() will call itself recursively to deserialize
+						// child folders, so all we have to do is start the deserialization process from the root folder
+						if (crypto != null)
+						{
+							using (new CryptoContext(crypto))
+							{
+								_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
+							}
+						}
+
+						else
+							_rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
+					}
 				}
 			}
 		}
@@ -586,17 +574,23 @@ created the bookmarks file.", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		/// </summary>
 		public void Save()
 		{
-			FileInfo destinationFile = new FileInfo(BookmarksFileName);
-			XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
+			if (_encryptionContainer != null)
+				_encryptionContainer.Save(BookmarksFileName);
 
-			// ReSharper disable AssignNullToNotNullAttribute
-			Directory.CreateDirectory(destinationFile.DirectoryName);
-			// ReSharper restore AssignNullToNotNullAttribute
-
-			using (XmlWriter bookmarksWriter = new XmlTextWriter(BookmarksFileName, new UnicodeEncoding()))
+			else
 			{
-				bookmarksSerializer.Serialize(bookmarksWriter, _rootFolder);
-				bookmarksWriter.Flush();
+				FileInfo destinationFile = new FileInfo(BookmarksFileName);
+				XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
+
+				// ReSharper disable AssignNullToNotNullAttribute
+				Directory.CreateDirectory(destinationFile.DirectoryName);
+				// ReSharper restore AssignNullToNotNullAttribute
+
+				using (XmlWriter bookmarksWriter = new XmlTextWriter(BookmarksFileName, new UnicodeEncoding()))
+				{
+					bookmarksSerializer.Serialize(bookmarksWriter, _rootFolder);
+					bookmarksWriter.Flush();
+				}
 			}
 		}
 

@@ -6,8 +6,12 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Serialization;
+using EasyConnect.Common;
 using EasyConnect.Protocols;
 
 namespace EasyConnect
@@ -131,6 +135,65 @@ namespace EasyConnect
 
 		private void _finishButton_Click(object sender, EventArgs e)
 		{
+			if ((!UseSharedBookmarksFile || (UseSharedBookmarksFile && !File.Exists(SharedBookmarksFilePath))) && File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml"))
+			{
+				string previousBookmarksFileName = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+				string bookmarksFileName = UseSharedBookmarksFile
+					                           ? SharedBookmarksFilePath
+					                           : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+
+				EncryptedBookmarks encryptionContainer = new EncryptedBookmarks();
+
+				using (XmlReader bookmarksReader = new XmlTextReader(previousBookmarksFileName))
+				{
+					// Read past the XML preprocessor directive to the root node
+					bookmarksReader.Read();
+					bookmarksReader.Read();
+
+					if (bookmarksReader.LocalName == "EncryptedBookmarks")
+						encryptionContainer = EncryptedBookmarks.Load(
+							this, bookmarksReader, () =>
+								{
+									PasswordWindow passwordWindow = new PasswordWindow();
+
+									if (passwordWindow.ShowDialog() != DialogResult.OK)
+										throw new Exception("Unable to open the bookmarks file.");
+
+									return passwordWindow.Password;
+								});
+
+					else
+					{
+						XmlSerializer bookmarksSerializer = new XmlSerializer(typeof (BookmarksFolder));
+						RsaCrypto rsaCrypto = new RsaCrypto("EasyConnect");
+
+						using (new CryptoContext(rsaCrypto))
+						{
+							BookmarksFolder rootFolder = (BookmarksFolder)bookmarksSerializer.Deserialize(bookmarksReader);
+
+							encryptionContainer.KeyThumbprint = rsaCrypto.GetThumbprint();
+							encryptionContainer.EncryptedKeyContainer = Convert.ToBase64String(rsaCrypto.GetEncryptedKeyContainer(SharingPassword));
+							encryptionContainer.RootFolder = rootFolder;
+
+							CspParameters parameters = new CspParameters
+								                           {
+									                           KeyContainerName = "EasyConnect Bookmarks " + encryptionContainer.KeyThumbprint
+								                           };
+							
+							RSACryptoServiceProvider newRsaCrypto = new RSACryptoServiceProvider(parameters);
+							newRsaCrypto.FromXmlString(rsaCrypto.ToXmlString());
+						}
+					}
+				}
+
+				encryptionContainer.Save(bookmarksFileName);
+			}
+
+			MainForm.Options.InitialSetupCompleted = true;
+			MainForm.Options.UseSharedBookmarks = UseSharedBookmarksFile;
+			MainForm.Options.SharedBookmarksFileName = SharedBookmarksFilePath;
+			MainForm.Options.Save();
+
 			DialogResult = DialogResult.OK;
 			Close();
 		}
