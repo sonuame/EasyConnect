@@ -35,6 +35,11 @@ namespace EasyConnect.Protocols
 			set;
 		}
 
+		public EncryptedBookmarks()
+		{
+			RootFolder = new BookmarksFolder();
+		}
+
 		public static EncryptedBookmarks Load(Form ownerForm, XmlReader bookmarksReader, Func<SecureString> showPasswordWindow)
 		{
 			if (bookmarksReader.LocalName != "EncryptedBookmarks")

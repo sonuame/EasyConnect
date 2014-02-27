@@ -186,64 +186,6 @@ namespace EasyConnect.Protocols
 		}
 
 		/// <summary>
-		/// Set the <see cref="EncryptionType"/> and <see cref="_crypto"/> objects.
-		/// </summary>
-		/// <param name="encryptionType">Encryption type to be used.</param>
-		public static void SetEncryptionType(EncryptionType encryptionType)
-		{
-			SetEncryptionType(encryptionType, null);
-		}
-
-		/// <summary>
-		/// Set the <see cref="EncryptionType"/> and <see cref="_crypto"/> objects.
-		/// </summary>
-		/// <param name="encryptionType">Encryption type to be used.</param>
-		/// <param name="encryptionKey">If <paramref name="encryptionType"/> is a symmetric algorithm, this represents the encryption key to use.</param>
-		public static void SetEncryptionType(EncryptionType encryptionType, SecureString encryptionKey)
-		{
-			switch (encryptionType)
-			{
-					// Simply open or create an RSA key container called EasyConnect
-				case EncryptionType.Rsa:
-					CspParameters parameters = new CspParameters
-						                           {
-							                           KeyContainerName = "EasyConnect"
-						                           };
-
-					_crypto = new RSACryptoServiceProvider(parameters);
-
-					break;
-
-					// Initialize a Rijndael instance with the key in encryptionKey
-				case EncryptionType.Rijndael:
-					if (encryptionKey == null)
-						throw new ArgumentException("When Rijndael is used as the encryption type, the encryption password cannot be null.", "encryptionKey");
-
-					Rijndael rijndael = Rijndael.Create();
-					rijndael.KeySize = 256;
-
-					// Get the bytes for the password
-					IntPtr marshalledKeyBytes = Marshal.SecureStringToGlobalAllocAnsi(encryptionKey);
-					byte[] keyBytes = new byte[rijndael.KeySize / 8];
-
-					Marshal.Copy(marshalledKeyBytes, keyBytes, 0, Math.Min(keyBytes.Length, encryptionKey.Length));
-
-					// Set the encryption key to the key bytes and the IV to a predetermined string
-					rijndael.Key = keyBytes;
-					rijndael.IV = Convert.FromBase64String("QGWyKbe+W9H0mL2igm73jw==");
-
-					Marshal.ZeroFreeGlobalAllocAnsi(marshalledKeyBytes);
-
-					_crypto = rijndael;
-
-					break;
-
-				default:
-					throw new ArgumentException("The encryption type " + encryptionType.ToString("G") + " is not supported.", "encryptionType");
-			}
-		}
-
-		/// <summary>
 		/// Sets the default protocol to assume when the user enters a URI manually without specifying a prefix.
 		/// </summary>
 		/// <param name="protocol">Connection protocol that we want to use by default.</param>

@@ -135,13 +135,13 @@ namespace EasyConnect
 
 		private void _finishButton_Click(object sender, EventArgs e)
 		{
+			string bookmarksFileName = UseSharedBookmarksFile
+				                           ? SharedBookmarksFilePath
+				                           : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+
 			if ((!UseSharedBookmarksFile || (UseSharedBookmarksFile && !File.Exists(SharedBookmarksFilePath))) && File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml"))
 			{
 				string previousBookmarksFileName = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
-				string bookmarksFileName = UseSharedBookmarksFile
-					                           ? SharedBookmarksFilePath
-					                           : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
-
 				EncryptedBookmarks encryptionContainer = new EncryptedBookmarks();
 
 				using (XmlReader bookmarksReader = new XmlTextReader(previousBookmarksFileName))
@@ -184,6 +184,28 @@ namespace EasyConnect
 							newRsaCrypto.FromXmlString(rsaCrypto.ToXmlString());
 						}
 					}
+				}
+
+				encryptionContainer.Save(bookmarksFileName);
+			}
+
+			else if (!File.Exists(bookmarksFileName))
+			{
+				EncryptedBookmarks encryptionContainer = new EncryptedBookmarks();
+				RsaCrypto rsaCrypto = new RsaCrypto("EasyConnect");
+
+				using (new CryptoContext(rsaCrypto))
+				{
+					encryptionContainer.KeyThumbprint = rsaCrypto.GetThumbprint();
+					encryptionContainer.EncryptedKeyContainer = Convert.ToBase64String(rsaCrypto.GetEncryptedKeyContainer(SharingPassword));
+
+					CspParameters parameters = new CspParameters
+						                           {
+							                           KeyContainerName = "EasyConnect Bookmarks " + encryptionContainer.KeyThumbprint
+						                           };
+
+					RSACryptoServiceProvider newRsaCrypto = new RSACryptoServiceProvider(parameters);
+					newRsaCrypto.FromXmlString(rsaCrypto.ToXmlString());
 				}
 
 				encryptionContainer.Save(bookmarksFileName);

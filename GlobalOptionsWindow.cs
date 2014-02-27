@@ -60,7 +60,6 @@ namespace EasyConnect
 			ConnectionFactory.SetDefaultProtocol((IProtocol) _defaultProtocolDropdown.SelectedItem);
 
 			_parentTabs.Options.AutoHideToolbar = _autoHideCheckbox.Checked;
-			_parentTabs.Options.EncryptionType = (EncryptionType) Enum.Parse(typeof (EncryptionType), ((ListItem) _encryptionTypeDropdown.SelectedItem).Value);
 			_parentTabs.Options.UseSharedBookmarks = _sharedLocationRadioButton.Checked;
 			_parentTabs.Options.SharedBookmarksFileName = _sharedLocationRadioButton.Checked
 				                                              ? _sharedLocationTextBox.Text
@@ -85,25 +84,6 @@ namespace EasyConnect
 			_parentTabs = Parent.TopLevelControl as MainForm;
 			_autoHideCheckbox.Checked = _parentTabs.Options.AutoHideToolbar;
 
-			List<ListItem> items = new List<ListItem>
-				                       {
-					                       new ListItem
-						                       {
-							                       Text = "Password",
-							                       Value = "Rijndael"
-						                       },
-					                       new ListItem
-						                       {
-							                       Text = "RSA Key Container",
-							                       Value = "Rsa"
-						                       }
-				                       };
-
-			_encryptionTypeDropdown.Items.AddRange(items.Cast<object>().ToArray());
-			// ReSharper disable PossibleInvalidOperationException
-			_encryptionTypeDropdown.SelectedItem = items.First(i => i.Value == _parentTabs.Options.EncryptionType.Value.ToString("G"));
-			// ReSharper restore PossibleInvalidOperationException
-
 			if (!_parentTabs.Options.UseSharedBookmarks)
 				_appDataFolderRadioButton.Checked = true;
 
@@ -113,29 +93,6 @@ namespace EasyConnect
 				_sharedLocationTextBox.Text = _parentTabs.Options.SharedBookmarksFileName;
 				_sharedLocationTextBox.Enabled = true;
 				_sharedLocationBrowseButton.Enabled = true;
-			}
-		}
-
-		/// <summary>
-		/// Handler method that's called when the selected item in <see cref="_encryptionTypeDropdown"/> is changed.  If the user selected 
-		/// <see cref="EncryptionType.Rijndael"/>, we prompt them to enter a password and save it to <see cref="_encryptionPassword"/>, otherwise we set
-		/// <see cref="_encryptionPassword"/> to null.
-		/// </summary>
-		/// <param name="sender">Object from which this event originated, <see cref="_encryptionTypeDropdown"/> in this case.</param>
-		/// <param name="e">Arguments associated with this event.</param>
-		private void _encryptionTypeDropdown_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			if ((_encryptionTypeDropdown.SelectedItem as ListItem).Value == "Rsa")
-				_encryptionPassword = null;
-
-				// ReSharper disable PossibleInvalidOperationException
-			else if ((_encryptionTypeDropdown.SelectedItem as ListItem).Value != _parentTabs.Options.EncryptionType.Value.ToString("G"))
-				// ReSharper restore PossibleInvalidOperationException
-			{
-				PasswordWindow passwordWindow = new PasswordWindow();
-
-				if (passwordWindow.ShowDialog(this) == DialogResult.OK)
-					_encryptionPassword = passwordWindow.Password;
 			}
 		}
 
