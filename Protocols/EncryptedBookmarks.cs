@@ -35,6 +35,12 @@ namespace EasyConnect.Protocols
 			set;
 		}
 
+		public void SetSharingPassword(SecureString password)
+		{
+			RsaCrypto rsaCrypto = new RsaCrypto("EasyConnect Bookmarks " + KeyThumbprint);
+			EncryptedKeyContainer = Convert.ToBase64String(rsaCrypto.GetEncryptedKeyContainer(password));
+		}
+
 		public EncryptedBookmarks()
 		{
 			RootFolder = new BookmarksFolder();

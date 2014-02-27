@@ -16,7 +16,7 @@ namespace EasyConnect
 		/// <summary>
 		/// If the user selected an encryption type of <see cref="EncryptionType.Rijndael"/>, this is the encryption key to use with that method.
 		/// </summary>
-		protected SecureString _encryptionPassword = null;
+		protected SecureString _bookmarksSharingPassword = null;
 
 		/// <summary>
 		/// Main application form for this window.
@@ -34,17 +34,6 @@ namespace EasyConnect
 				_defaultProtocolDropdown.Items.Add(protocol);
 
 			_defaultProtocolDropdown.SelectedItem = ConnectionFactory.GetDefaultProtocol();
-		}
-
-		/// <summary>
-		/// If the user selected an encryption type of <see cref="EncryptionType.Rijndael"/>, this is the encryption key to use with that method.
-		/// </summary>
-		public SecureString EncryptionPassword
-		{
-			get
-			{
-				return _encryptionPassword;
-			}
 		}
 
 		/// <summary>
@@ -72,6 +61,12 @@ namespace EasyConnect
 
 			else
 				_parentTabs.Bookmarks.Load();
+
+			if (_bookmarksSharingPassword != null)
+			{
+				_parentTabs.Bookmarks.SetSharingPassword(_bookmarksSharingPassword);
+				_parentTabs.Bookmarks.Save();
+			}
 		}
 
 		/// <summary>
@@ -133,6 +128,18 @@ namespace EasyConnect
 
 			if (_sharedLocationFileDialog.ShowDialog(this) == DialogResult.OK)
 				_sharedLocationTextBox.Text = _sharedLocationFileDialog.FileName;
+		}
+
+		private void _setSharingPasswordButton_Click(object sender, EventArgs e)
+		{
+			PasswordWindow passwordWindow = new PasswordWindow
+				                                {
+					                                ShowCancelButton = true
+				                                };
+
+			_bookmarksSharingPassword = passwordWindow.ShowDialog() == DialogResult.OK
+				                            ? passwordWindow.Password
+				                            : null;
 		}
 	}
 }

@@ -41,6 +41,8 @@
 			this._sharedLocationBrowseButton = new System.Windows.Forms.Button();
 			this._bookmarksLocationLabel = new System.Windows.Forms.Label();
 			this._sharedLocationFileDialog = new System.Windows.Forms.OpenFileDialog();
+			this._setBookmarksSharingPasswordLabel = new System.Windows.Forms.Label();
+			this._setSharingPasswordButton = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// _defaultProtocolLabel
@@ -162,7 +164,7 @@
 			// _bookmarksLocationLabel
 			// 
 			this._bookmarksLocationLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F);
-			this._bookmarksLocationLabel.Location = new System.Drawing.Point(48, 147);
+			this._bookmarksLocationLabel.Location = new System.Drawing.Point(47, 145);
 			this._bookmarksLocationLabel.Name = "_bookmarksLocationLabel";
 			this._bookmarksLocationLabel.Size = new System.Drawing.Size(173, 20);
 			this._bookmarksLocationLabel.TabIndex = 79;
@@ -174,6 +176,26 @@
 			this._sharedLocationFileDialog.CheckFileExists = false;
 			this._sharedLocationFileDialog.FileName = "Bookmarks.xml";
 			// 
+			// _setBookmarksSharingPasswordLabel
+			// 
+			this._setBookmarksSharingPasswordLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+			this._setBookmarksSharingPasswordLabel.Location = new System.Drawing.Point(47, 238);
+			this._setBookmarksSharingPasswordLabel.Name = "_setBookmarksSharingPasswordLabel";
+			this._setBookmarksSharingPasswordLabel.Size = new System.Drawing.Size(173, 20);
+			this._setBookmarksSharingPasswordLabel.TabIndex = 80;
+			this._setBookmarksSharingPasswordLabel.Text = "Bookmarks sharing password:";
+			this._setBookmarksSharingPasswordLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// _setSharingPasswordButton
+			// 
+			this._setSharingPasswordButton.Location = new System.Drawing.Point(227, 235);
+			this._setSharingPasswordButton.Name = "_setSharingPasswordButton";
+			this._setSharingPasswordButton.Size = new System.Drawing.Size(192, 23);
+			this._setSharingPasswordButton.TabIndex = 81;
+			this._setSharingPasswordButton.Text = "Set bookmarks sharing password";
+			this._setSharingPasswordButton.UseVisualStyleBackColor = true;
+			this._setSharingPasswordButton.Click += new System.EventHandler(this._setSharingPasswordButton_Click);
+			// 
 			// GlobalOptionsWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -181,6 +203,8 @@
 			this.AutoScroll = true;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(249)))), ((int)(((byte)(249)))), ((int)(((byte)(249)))));
 			this.ClientSize = new System.Drawing.Size(597, 384);
+			this.Controls.Add(this._setSharingPasswordButton);
+			this.Controls.Add(this._setBookmarksSharingPasswordLabel);
 			this.Controls.Add(this._bookmarksLocationLabel);
 			this.Controls.Add(this._sharedLocationBrowseButton);
 			this.Controls.Add(this._sharedLocationTextBox);
@@ -217,5 +241,7 @@
 		private System.Windows.Forms.Button _sharedLocationBrowseButton;
 		private System.Windows.Forms.Label _bookmarksLocationLabel;
 		private System.Windows.Forms.OpenFileDialog _sharedLocationFileDialog;
+		private System.Windows.Forms.Label _setBookmarksSharingPasswordLabel;
+		private System.Windows.Forms.Button _setSharingPasswordButton;
     }
 }

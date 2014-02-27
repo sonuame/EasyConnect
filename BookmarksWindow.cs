@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -1745,6 +1746,11 @@ namespace EasyConnect
 
 				return String.CompareOrdinal(item1.Text, item2.Text);
 			}
+		}
+
+		public void SetSharingPassword(SecureString password)
+		{
+			_encryptionContainer.SetSharingPassword(password);
 		}
 	}
 }
