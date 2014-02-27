@@ -65,5 +65,12 @@ namespace EasyConnect
 				_sharedFilePathBrowseButton.Enabled = true;
 			}
 		}
+
+		protected override void OnLoad(EventArgs e)
+		{
+			base.OnLoad(e);
+
+			_userFolderRadioButton.Focus();
+		}
 	}
 }

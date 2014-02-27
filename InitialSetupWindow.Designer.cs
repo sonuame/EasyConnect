@@ -99,10 +99,12 @@
 			this.Controls.Add(this._finishButton);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+			this.KeyPreview = true;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "InitialSetupWindow";
 			this.Text = "Encryption Setup";
+			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.InitialSetupWindow_KeyDown);
 			this._containerPanel.ResumeLayout(false);
 			this._containerPanel.PerformLayout();
 			this.ResumeLayout(false);

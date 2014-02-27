@@ -227,5 +227,17 @@ namespace EasyConnect
 			_currentStep--;
 			SetNextStep();
 		}
+
+		private void InitialSetupWindow_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Enter)
+			{
+				if (_nextButton.Enabled)
+					_nextButton_Click(null, null);
+
+				else if (_finishButton.Enabled)
+					_finishButton_Click(null, null);
+			}
+		}
 	}
 }

@@ -29,5 +29,12 @@ namespace EasyConnect
 				_passwordTextBox.SecureText = value;
 			}
 		}
+
+		protected override void OnLoad(EventArgs e)
+		{
+			base.OnLoad(e);
+
+			_passwordTextBox.Focus();
+		}
 	}
 }
