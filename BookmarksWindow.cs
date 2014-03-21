@@ -1511,16 +1511,32 @@ namespace EasyConnect
 			// to Move
 			if (targetItem != null && targetItem.ImageIndex == 0 && _listViewDropTarget != targetItem)
 			{
-				if (targetItem.Selected)
-					_listViewDropTarget = null;
+				BookmarksFolder targetFolder = _listViewFolders[targetItem];
+				BookmarksFolder dragTreeFolder = _draggingFromTree
+					                             ? _folderTreeNodes[_bookmarksFoldersTreeView.SelectedNode]
+					                             : null;
+
+				if (dragTreeFolder == null || (!IsDescendantOf(targetFolder, dragTreeFolder) && dragTreeFolder.ParentFolder != targetFolder))
+				{
+					if (targetItem.Selected)
+					{
+						_listViewDropTarget = null;
+						e.Effect = DragDropEffects.None;
+					}
+
+					else
+					{
+						targetItem.BackColor = SystemColors.Highlight;
+						targetItem.ForeColor = SystemColors.HighlightText;
+
+						_listViewDropTarget = targetItem;
+						e.Effect = DragDropEffects.Move;
+					}
+				}
 
 				else
 				{
-					targetItem.BackColor = SystemColors.Highlight;
-					targetItem.ForeColor = SystemColors.HighlightText;
-
-					_listViewDropTarget = targetItem;
-					e.Effect = DragDropEffects.Move;
+					e.Effect = DragDropEffects.None;
 				}
 			}
 
@@ -1530,6 +1546,19 @@ namespace EasyConnect
 				_listViewDropTarget = null;
 				e.Effect = DragDropEffects.None;
 			}
+		}
+
+		private bool IsDescendantOf(BookmarksFolder checkFolder, BookmarksFolder potentialParent)
+		{
+			while (checkFolder != null)
+			{
+				if (checkFolder == potentialParent)
+					return true;
+
+				checkFolder = checkFolder.ParentFolder;
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -1583,6 +1612,8 @@ namespace EasyConnect
 			_treeViewDropTarget = null;
 			_draggingFromListView = false;
 			_draggingFromTree = true;
+
+			_bookmarksFoldersTreeView.SelectedNode = e.Item as TreeNode;
 			_bookmarksFoldersTreeView.DoDragDrop(e.Item, DragDropEffects.Move);
 		}
 
@@ -1617,16 +1648,32 @@ namespace EasyConnect
 			// If the user has actually moved over an tree node, highlight that node and set the drop effect to Move
 			if (targetItem != null && _treeViewDropTarget != targetItem)
 			{
-				if (targetItem == _bookmarksFoldersTreeView.SelectedNode)
-					_treeViewDropTarget = null;
+				BookmarksFolder targetFolder = _folderTreeNodes[targetItem];
+				BookmarksFolder dragFolder = _draggingFromTree
+					                             ? _folderTreeNodes[_bookmarksFoldersTreeView.SelectedNode]
+					                             : _listViewFolders[_bookmarksListView.SelectedItems[0]];
+
+				if (dragFolder == null || (!IsDescendantOf(targetFolder, dragFolder) && dragFolder.ParentFolder != targetFolder))
+				{
+					if (targetItem == _bookmarksFoldersTreeView.SelectedNode)
+					{
+						_treeViewDropTarget = null;
+						e.Effect = DragDropEffects.None;
+					}
+
+					else
+					{
+						targetItem.BackColor = SystemColors.Highlight;
+						targetItem.ForeColor = SystemColors.HighlightText;
+
+						_treeViewDropTarget = targetItem;
+						e.Effect = DragDropEffects.Move;
+					}
+				}
 
 				else
 				{
-					targetItem.BackColor = SystemColors.Highlight;
-					targetItem.ForeColor = SystemColors.HighlightText;
-
-					_treeViewDropTarget = targetItem;
-					e.Effect = DragDropEffects.Move;
+					e.Effect = DragDropEffects.None;
 				}
 			}
 
