@@ -39,10 +39,12 @@
 			// 
 			// _finishButton
 			// 
+			this._finishButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this._finishButton.Enabled = false;
-			this._finishButton.Location = new System.Drawing.Point(510, 344);
+			this._finishButton.Location = new System.Drawing.Point(680, 423);
+			this._finishButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this._finishButton.Name = "_finishButton";
-			this._finishButton.Size = new System.Drawing.Size(75, 23);
+			this._finishButton.Size = new System.Drawing.Size(100, 28);
 			this._finishButton.TabIndex = 0;
 			this._finishButton.Text = "Finish";
 			this._finishButton.UseVisualStyleBackColor = true;
@@ -50,9 +52,11 @@
 			// 
 			// _nextButton
 			// 
-			this._nextButton.Location = new System.Drawing.Point(429, 344);
+			this._nextButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this._nextButton.Location = new System.Drawing.Point(572, 423);
+			this._nextButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this._nextButton.Name = "_nextButton";
-			this._nextButton.Size = new System.Drawing.Size(75, 23);
+			this._nextButton.Size = new System.Drawing.Size(100, 28);
 			this._nextButton.TabIndex = 1;
 			this._nextButton.Text = "Next >";
 			this._nextButton.UseVisualStyleBackColor = true;
@@ -60,10 +64,12 @@
 			// 
 			// _previousButton
 			// 
+			this._previousButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this._previousButton.Enabled = false;
-			this._previousButton.Location = new System.Drawing.Point(348, 344);
+			this._previousButton.Location = new System.Drawing.Point(464, 423);
+			this._previousButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this._previousButton.Name = "_previousButton";
-			this._previousButton.Size = new System.Drawing.Size(75, 23);
+			this._previousButton.Size = new System.Drawing.Size(100, 28);
 			this._previousButton.TabIndex = 2;
 			this._previousButton.Text = "< Previous";
 			this._previousButton.UseVisualStyleBackColor = true;
@@ -73,25 +79,27 @@
 			// 
 			this._containerPanel.Controls.Add(this._introLabel);
 			this._containerPanel.Location = new System.Drawing.Point(-1, -1);
+			this._containerPanel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this._containerPanel.Name = "_containerPanel";
-			this._containerPanel.Size = new System.Drawing.Size(600, 346);
+			this._containerPanel.Size = new System.Drawing.Size(800, 416);
 			this._containerPanel.TabIndex = 3;
 			// 
 			// _introLabel
 			// 
 			this._introLabel.AutoSize = true;
-			this._introLabel.Location = new System.Drawing.Point(13, 10);
+			this._introLabel.Location = new System.Drawing.Point(17, 12);
+			this._introLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this._introLabel.Name = "_introLabel";
-			this._introLabel.Size = new System.Drawing.Size(551, 26);
+			this._introLabel.Size = new System.Drawing.Size(726, 34);
 			this._introLabel.TabIndex = 0;
 			this._introLabel.Text = "We will now walk you through the setup process for encryption keys to protect you" +
     "r bookmarks file.  Click \"Next\" to \r\ncontinue.";
 			// 
 			// InitialSetupWindow
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(597, 379);
+			this.ClientSize = new System.Drawing.Size(796, 466);
 			this.ControlBox = false;
 			this.Controls.Add(this._containerPanel);
 			this.Controls.Add(this._previousButton);
@@ -100,6 +108,7 @@
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
+			this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "InitialSetupWindow";
