@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Cryptography;
 
 namespace EasyConnect.Common
 {
@@ -59,6 +60,36 @@ namespace EasyConnect.Common
 			Marshal.ZeroFreeGlobalAllocAnsi(marshalledDataBytes);
 
 			return encryptedData;
+		}
+
+		public static void ImportRsaKeyContainer(string keyContainerName, string keyThumbprint, byte[] encryptedKeyContainer, SecureString password)
+		{
+			RsaCrypto rsaCrypto = new RsaCrypto(keyContainerName);
+
+			// It's already in the local key store, so just return
+			if (rsaCrypto.GetThumbprint() == keyThumbprint)
+				return;
+
+			using (RSACryptoServiceProvider rsaCryptoServiceProvider = new RSACryptoServiceProvider())
+			using (new CryptoContext(new RijndaelCrypto(password)))
+			{
+				rsaCryptoServiceProvider.ImportCspBlob(Decrypt(encryptedKeyContainer));
+
+				// It's a little ridiculous to have to go through this two phase process of instantiating RSACryptoServiceProvider objects, but it's necessary 
+				// because you can't call ImportCspBlob() on RSACryptoServiceProvider objects constructed with a CspParameters parameter, since it either loads 
+				// up a matching existing key from the local key store or creates and saves a new one.  Because of this, you can't call ImportCspBlob() on top 
+				// of that.  So, we have to instead call ImportCspBlob() on one instance created without CspParameters, construct another instance with 
+				// CspParameters, and then call ImportParameters() on that second instance to properly persist the imported key to the keystore.  Laborious and 
+				// verbose, but necessary.
+				using (RSACryptoServiceProvider saveCryptoServiceProvider = new RSACryptoServiceProvider(
+					new CspParameters
+					{
+						KeyContainerName = keyContainerName
+					}))
+				{
+					saveCryptoServiceProvider.ImportParameters(rsaCryptoServiceProvider.ExportParameters(true));
+				}
+			}
 		}
 	}
 }

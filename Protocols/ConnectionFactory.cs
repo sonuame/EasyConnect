@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
+using EasyConnect.Common;
 
 namespace EasyConnect.Protocols
 {
@@ -223,6 +224,7 @@ namespace EasyConnect.Protocols
 
 			if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Defaults.xml"))
 			{
+				using (new CryptoContext(new RsaCrypto("EasyConnect")))
 				using (
 					XmlReader reader =
 						new XmlTextReader(

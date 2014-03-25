@@ -52,37 +52,18 @@ namespace EasyConnect.Protocols
 				throw new Exception("Unrecognized bookmarks file type.  Root node name was " + bookmarksReader.LocalName);
 
 			string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
-			bool keyExists = false;
-			CspParameters parameters = new CspParameters
-				                           {
-					                           ProviderName = "EasyConnect Bookmarks " + keyThumbprint,
-					                           Flags = CspProviderFlags.UseExistingKey
-				                           };
-			RSACryptoServiceProvider rsaCrypto = null;
+			RsaCrypto rsaCrypto = new RsaCrypto("EasyConnect Bookmarks " + keyThumbprint);
 
-			try
+			if (rsaCrypto.GetThumbprint() != keyThumbprint)
 			{
-				rsaCrypto = new RSACryptoServiceProvider(parameters);
-				keyExists = true;
-			}
-
-			catch (Exception)
-			{
-			}
-
-			if (!keyExists)
-			{
-				parameters.Flags = CspProviderFlags.NoFlags;
-				rsaCrypto = new RSACryptoServiceProvider(parameters);
-
-				// It's the first time that this bookmarks file has been opened, so we don't have the matching key container in the store; decrypt
-				// it and import it
+				// It's the first time that this bookmarks file has been opened, so we don't have the matching key container in the store; decrypt it and 
+				// import it
 				byte[] encryptedKeyContainer = Convert.FromBase64String(bookmarksReader.GetAttribute("EncryptedKeyContainer"));
 
-				MessageBox.Show(ownerForm, "Sharing Password Required",
-@"Since we don't have the encryption key for this bookmarks file in the local store, 
-you'll need to enter its sharing password, which you can get from the person who 
-created the bookmarks file.", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show(
+					ownerForm,
+					"Since we don't have the encryption key for this bookmarks file in the local store, you'll need to enter its sharing password, which you can get from the person who created the bookmarks file.",
+					"Sharing Password Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				bool encryptionKeyImported = false;
 
@@ -92,16 +73,15 @@ created the bookmarks file.", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 					try
 					{
-						using (new CryptoContext(new RijndaelCrypto(sharingPassword)))
-						{
-							rsaCrypto.ImportCspBlob(CryptoUtilities.Decrypt(encryptedKeyContainer));
-							encryptionKeyImported = true;
-						}
+						CryptoUtilities.ImportRsaKeyContainer("EasyConnect Bookmarks " + keyThumbprint, keyThumbprint, encryptedKeyContainer, sharingPassword);
+						encryptionKeyImported = true;
 					}
 
 					catch (CryptographicException)
 					{
-						MessageBox.Show(ownerForm, "Password Incorrect", "The sharing password that you provided was incorrect.");
+						MessageBox.Show(
+							ownerForm, "The sharing password that you provided was incorrect.", "Password Incorrect", MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
 					}
 				}
 			}

@@ -139,28 +139,60 @@ namespace EasyConnect
 				                           ? SharedBookmarksFilePath
 				                           : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
 
-			if ((!UseSharedBookmarksFile || (UseSharedBookmarksFile && !File.Exists(SharedBookmarksFilePath))) && File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml"))
+			if (((!UseSharedBookmarksFile || (UseSharedBookmarksFile && !File.Exists(SharedBookmarksFilePath))) && File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml")) || File.Exists(bookmarksFileName))
 			{
-				string previousBookmarksFileName = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml";
+				string previousBookmarksFileName = ((!UseSharedBookmarksFile || (UseSharedBookmarksFile && !File.Exists(SharedBookmarksFilePath))) &&
+				                                    File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml"))
+					? (Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\EasyConnect\\Bookmarks.xml")
+					: bookmarksFileName;
 				EncryptedBookmarks encryptionContainer = new EncryptedBookmarks();
 
 				using (XmlReader bookmarksReader = new XmlTextReader(previousBookmarksFileName))
 				{
-					// Read past the XML preprocessor directive to the root node
-					bookmarksReader.Read();
-					bookmarksReader.Read();
+					// Read to the root node
+					while (bookmarksReader.NodeType != XmlNodeType.Element)
+						bookmarksReader.Read();
 
 					if (bookmarksReader.LocalName == "EncryptedBookmarks")
+					{
+						bool keyContainerImported = false;
+						string keyThumbprint = bookmarksReader.GetAttribute("KeyThumbprint");
+						byte[] encryptedKeyContainer = Convert.FromBase64String(bookmarksReader.GetAttribute("EncryptedKeyContainer"));
+
+						while (!keyContainerImported)
+						{
+							try
+							{
+								CryptoUtilities.ImportRsaKeyContainer("EasyConnect Bookmarks " + keyThumbprint, keyThumbprint, encryptedKeyContainer, SharingPassword);
+								keyContainerImported = true;
+							}
+
+							catch (CryptographicException)
+							{
+								MessageBox.Show(
+									ParentForm, "The sharing password that you provided was incorrect.", "Password Incorrect", MessageBoxButtons.OK,
+									MessageBoxIcon.Error);
+
+								PasswordWindow passwordWindow = new PasswordWindow();
+
+								if (passwordWindow.ShowDialog() != DialogResult.OK)
+									throw new Exception("Unable to open the bookmarks file.");
+
+								SharingPassword = passwordWindow.Password;
+							}
+						}
+
 						encryptionContainer = EncryptedBookmarks.Load(
 							this, bookmarksReader, () =>
-								{
-									PasswordWindow passwordWindow = new PasswordWindow();
+							{
+								PasswordWindow passwordWindow = new PasswordWindow();
 
-									if (passwordWindow.ShowDialog() != DialogResult.OK)
-										throw new Exception("Unable to open the bookmarks file.");
+								if (passwordWindow.ShowDialog() != DialogResult.OK)
+									throw new Exception("Unable to open the bookmarks file.");
 
-									return passwordWindow.Password;
-								});
+								return passwordWindow.Password;
+							});
+					}
 
 					else
 					{
@@ -169,17 +201,17 @@ namespace EasyConnect
 
 						using (new CryptoContext(rsaCrypto))
 						{
-							BookmarksFolder rootFolder = (BookmarksFolder)bookmarksSerializer.Deserialize(bookmarksReader);
+							BookmarksFolder rootFolder = (BookmarksFolder) bookmarksSerializer.Deserialize(bookmarksReader);
 
 							encryptionContainer.KeyThumbprint = rsaCrypto.GetThumbprint();
 							encryptionContainer.EncryptedKeyContainer = Convert.ToBase64String(rsaCrypto.GetEncryptedKeyContainer(SharingPassword));
 							encryptionContainer.RootFolder = rootFolder;
 
 							CspParameters parameters = new CspParameters
-								                           {
-									                           KeyContainerName = "EasyConnect Bookmarks " + encryptionContainer.KeyThumbprint
-								                           };
-							
+							                           {
+								                           KeyContainerName = "EasyConnect Bookmarks " + encryptionContainer.KeyThumbprint
+							                           };
+
 							RSACryptoServiceProvider newRsaCrypto = new RSACryptoServiceProvider(parameters);
 							newRsaCrypto.FromXmlString(rsaCrypto.ToXmlString());
 						}
