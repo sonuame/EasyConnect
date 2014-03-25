@@ -869,7 +869,11 @@ namespace EasyConnect
 				                         };
 
 			// When the options form is closed, update the second column in the list view with the updated host for the connection
-			optionsTab.Content.FormClosed += (o, args) => selectedItem.SubItems[1].Text = _listViewConnections[selectedItem].Host;
+			optionsTab.Content.FormClosed += (o, args) =>
+			{
+				selectedItem.SubItems[1].Text = _listViewConnections[selectedItem].Host;
+				Save();
+			};
 
 			ParentTabs.Tabs.Add(optionsTab);
 			ParentTabs.ResizeTabContents(optionsTab);
@@ -978,7 +982,10 @@ namespace EasyConnect
 		private void _addBookmarkMenuItem_Click(IProtocol type)
 		{
 			// Create a new connection instance by cloning the protocol's default
-			IConnection connection = (IConnection) ConnectionFactory.GetDefaults(type.GetType()).Clone();
+			IConnection connection = null;
+				
+			using (new CryptoContext(_encryptionContainer.GetCrypto()))
+				connection = (IConnection) ConnectionFactory.GetDefaults(type.GetType()).Clone();
 
 			connection.Name = "New Connection";
 
@@ -1149,7 +1156,11 @@ namespace EasyConnect
 					                         };
 
 				// When the options window is closed, update the value in the host column to what was supplied by the user
-				optionsTab.Content.FormClosed += (o, args) => selectedItem.SubItems[1].Text = _listViewConnections[selectedItem].Host;
+				optionsTab.Content.FormClosed += (o, args) =>
+				{
+					selectedItem.SubItems[1].Text = _listViewConnections[selectedItem].Host;
+					Save();
+				};
 
 				ParentTabs.Tabs.Add(optionsTab);
 				ParentTabs.ResizeTabContents(optionsTab);

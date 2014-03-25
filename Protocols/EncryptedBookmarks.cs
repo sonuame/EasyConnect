@@ -35,9 +35,19 @@ namespace EasyConnect.Protocols
 			set;
 		}
 
+		public static RsaCrypto GetCrypto(string keyThumbprint)
+		{
+			return new RsaCrypto("EasyConnect Bookmarks " + keyThumbprint);
+		}
+
+		public RsaCrypto GetCrypto()
+		{
+			return GetCrypto(KeyThumbprint);
+		}
+
 		public void SetSharingPassword(SecureString password)
 		{
-			RsaCrypto rsaCrypto = new RsaCrypto("EasyConnect Bookmarks " + KeyThumbprint);
+			RsaCrypto rsaCrypto = GetCrypto();
 			EncryptedKeyContainer = Convert.ToBase64String(rsaCrypto.GetEncryptedKeyContainer(password));
 		}
 
@@ -88,7 +98,7 @@ namespace EasyConnect.Protocols
 
 			XmlSerializer bookmarksSerializer = new XmlSerializer(typeof(EncryptedBookmarks));
 
-			using (new CryptoContext(new RsaCrypto("EasyConnect Bookmarks " + keyThumbprint)))
+			using (new CryptoContext(GetCrypto(keyThumbprint)))
 			{
 				return (EncryptedBookmarks)bookmarksSerializer.Deserialize(bookmarksReader);
 			}
@@ -115,7 +125,7 @@ namespace EasyConnect.Protocols
 			Directory.CreateDirectory(destinationFile.DirectoryName);
 			// ReSharper restore AssignNullToNotNullAttribute
 
-			using (new CryptoContext(new RsaCrypto("EasyConnect Bookmarks " + KeyThumbprint)))
+			using (new CryptoContext(GetCrypto()))
 			using (XmlWriter bookmarksWriter = new XmlTextWriter(fileName, new UnicodeEncoding()))
 			{
 				bookmarksSerializer.Serialize(bookmarksWriter, this);
