@@ -255,6 +255,7 @@ namespace EasyConnect.Protocols
 		/// </summary>
 		protected static void SaveDefaults()
 		{
+			using (new CryptoContext(new RsaCrypto("EasyConnect")))
 			using (
 				XmlWriter writer =
 					new XmlTextWriter(
@@ -370,7 +371,13 @@ namespace EasyConnect.Protocols
 
 			// Get the default connection data for the protocol
 			IProtocol protocol = _protocols.First(pair => pair.Value.ProtocolPrefix.ToLower() == protocolPrefix.ToLower()).Value;
-			IConnection connection = (IConnection) GetDefaults(protocol).Clone();
+
+			IConnection connection = null;
+
+			using (new CryptoContext(new RsaCrypto("EasyConnect")))
+			{
+				connection = (IConnection) GetDefaults(protocol).Clone();
+			}
 
 			connection.Host = match.Groups["host"].Value;
 

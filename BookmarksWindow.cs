@@ -1324,8 +1324,13 @@ namespace EasyConnect
 				return;
 			}
 
-			List<object> clonedItems = (from item in source
-			                            select ((ICloneable) item).Clone()).ToList();
+			List<object> clonedItems = null;
+
+			using (new CryptoContext(_encryptionContainer.GetCrypto()))
+			{
+				 clonedItems = (from item in source
+				                select ((ICloneable) item).Clone()).ToList();
+			}
 
 			// Add the items to the target folder
 			foreach (object clonedItem in clonedItems)

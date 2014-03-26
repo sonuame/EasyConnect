@@ -199,7 +199,9 @@ namespace EasyConnect.Protocols
 		{
 			BookmarksFolder clonedFolder = new BookmarksFolder
 				                               {
-					                               Name = Name
+					                               Name = Name,
+												   EncryptedPassword = EncryptedPassword,
+												   Username = Username
 				                               };
 
 			foreach (IConnection bookmark in Bookmarks)
