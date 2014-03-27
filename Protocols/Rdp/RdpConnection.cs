@@ -254,7 +254,7 @@ namespace EasyConnect.Protocols.Rdp
                 if (ProxyPassword == null || ProxyPassword.Length == 0)
                     return null;
 
-                return Convert.ToBase64String(ConnectionFactory.Encrypt(ProxyPassword));
+                return Convert.ToBase64String(CryptoUtilities.Encrypt(ProxyPassword));
             }
 
             set

@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -40,11 +38,6 @@ namespace EasyConnect.Protocols
 		/// Default URI prefix to assume when the user enters a URI manually without specifying a protocol.
 		/// </summary>
 		protected static string _defaultProtocolPrefix = null;
-
-		/// <summary>
-		/// Crypto object used in the <see cref="Encrypt(byte[])"/> method.
-		/// </summary>
-		protected static object _crypto;
 
 		/// <summary>
 		/// Static constructor.  Reads all .dll files in the application's directory and looks for types implementing <see cref="IProtocol"/>; instances of
@@ -87,103 +80,6 @@ namespace EasyConnect.Protocols
 		/// </summary>
 		private ConnectionFactory()
 		{
-		}
-
-		/// <summary>
-		/// Flag indicating whether the <see cref="_crypto"/> object has been initialized.
-		/// </summary>
-		public static bool ReadyForCrypto
-		{
-			get
-			{
-				return _crypto != null;
-			}
-		}
-
-		/// <summary>
-		/// Encrypts <paramref name="data"/> by using the <see cref="_crypto"/> currently set.
-		/// </summary>
-		/// <param name="data">Data that we are to encrypt.</param>
-		/// <returns>Encrypted data.</returns>
-		public static byte[] Encrypt(byte[] data)
-		{
-			// ReSharper disable CanBeReplacedWithTryCastAndCheckForNull
-			if (_crypto is SymmetricAlgorithm)
-			{
-				MemoryStream memoryStream = new MemoryStream();
-				CryptoStream cryptoStream = new CryptoStream(memoryStream, ((SymmetricAlgorithm) _crypto).CreateEncryptor(), CryptoStreamMode.Write);
-
-				cryptoStream.Write(data, 0, data.Length);
-				cryptoStream.Close();
-				memoryStream.Close();
-
-				return memoryStream.ToArray();
-			}
-
-			else if (_crypto is RSACryptoServiceProvider)
-				return ((RSACryptoServiceProvider) _crypto).Encrypt(data, true);
-
-			else
-				throw new NotSupportedException("The crypto object " + _crypto.GetType().Name + " is not supported.");
-			// ReSharper restore CanBeReplacedWithTryCastAndCheckForNull
-		}
-
-		/// <summary>
-		/// Encrypts a password specified in <paramref name="data"/> by using the <see cref="_crypto"/> currently set.
-		/// </summary>
-		/// <param name="data">Data that we are to encrypt.</param>
-		/// <returns>Encrypted data.</returns>
-		public static byte[] Encrypt(SecureString data)
-		{
-			IntPtr marshalledDataBytes = Marshal.SecureStringToGlobalAllocAnsi(data);
-			byte[] dataBytes = new byte[data.Length];
-
-			Marshal.Copy(marshalledDataBytes, dataBytes, 0, dataBytes.Length);
-
-			byte[] encryptedData = Encrypt(dataBytes);
-
-			// Clear the data bytes from memory
-			for (int i = 0; i < dataBytes.Length; i++)
-				dataBytes[i] = 0;
-
-			Marshal.ZeroFreeGlobalAllocAnsi(marshalledDataBytes);
-
-			return encryptedData;
-		}
-
-		public static void SetRijndaelEncryptor(SecureString encryptionKey)
-		{
-			if (encryptionKey == null)
-				throw new ArgumentException("The encryption password cannot be null.", "encryptionKey");
-
-			Rijndael rijndael = Rijndael.Create();
-			rijndael.KeySize = 256;
-
-			// Get the bytes for the password
-			IntPtr marshalledKeyBytes = Marshal.SecureStringToGlobalAllocAnsi(encryptionKey);
-			byte[] keyBytes = new byte[rijndael.KeySize / 8];
-
-			Marshal.Copy(marshalledKeyBytes, keyBytes, 0, Math.Min(keyBytes.Length, encryptionKey.Length));
-
-			// Set the encryption key to the key bytes and the IV to a predetermined string
-			rijndael.Key = keyBytes;
-			rijndael.IV = Convert.FromBase64String("QGWyKbe+W9H0mL2igm73jw==");
-
-			Marshal.ZeroFreeGlobalAllocAnsi(marshalledKeyBytes);
-
-			_crypto = rijndael;
-		}
-
-		public static void SetRsaEncryptor(string instanceID)
-		{
-			CspParameters parameters = new CspParameters
-				                           {
-					                           KeyContainerName = "EasyConnect" + (String.IsNullOrEmpty(instanceID)
-						                                                               ? ""
-						                                                               : " " + instanceID)
-				                           };
-
-			_crypto = new RSACryptoServiceProvider(parameters);
 		}
 
 		/// <summary>

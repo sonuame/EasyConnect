@@ -184,10 +184,7 @@ namespace EasyConnect
 		{
 			get
 			{
-				if (_bookmarks == null && ConnectionFactory.ReadyForCrypto)
-					_bookmarks = new BookmarksWindow(this);
-
-				return _bookmarks;
+				return _bookmarks ?? (_bookmarks = new BookmarksWindow(this));
 			}
 		}
 
@@ -198,10 +195,7 @@ namespace EasyConnect
 		{
 			get
 			{
-				if (_history == null && ConnectionFactory.ReadyForCrypto)
-					_history = new HistoryWindow(this);
-
-				return _history;
+				return _history ?? (_history = new HistoryWindow(this));
 			}
 		}
 
