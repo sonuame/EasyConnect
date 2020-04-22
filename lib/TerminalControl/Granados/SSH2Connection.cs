@@ -23,13 +23,16 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ECPoint = Granados.PKI.ECPoint;
 
-namespace Granados.SSH2 {
+namespace Granados.SSH2
+{
 
     /// <summary>
     /// SSH2 connection
     /// </summary>
-    internal class SSH2Connection : ISSHConnection, IDisposable {
+    internal class SSH2Connection : ISSHConnection, IDisposable
+    {
         private const int RESPONSE_TIMEOUT = 10000;
 
         private readonly IGranadosSocket _socket;
@@ -72,15 +75,18 @@ namespace Granados.SSH2 {
                     string serverVersion,
                     string clientVersion,
                     Func<ISSHConnection, ISSHConnectionEventHandler> connectionEventHandlerCreator,
-                    Func<ISSHConnection, ISSHProtocolEventLogger> protocolEventLoggerCreator) {
+                    Func<ISSHConnection, ISSHProtocolEventLogger> protocolEventLoggerCreator)
+        {
 
             _socket = socket;
 
             var connEventHandler = connectionEventHandlerCreator != null ? connectionEventHandlerCreator(this) : null;
-            if (connEventHandler != null) {
+            if (connEventHandler != null)
+            {
                 _eventHandler = new SSHConnectionEventHandlerIgnoreErrorWrapper(connEventHandler);
             }
-            else {
+            else
+            {
                 _eventHandler = new SimpleSSHConnectionEventHandler();
             }
 
@@ -122,7 +128,8 @@ namespace Granados.SSH2 {
         /// Lazy initialization of the <see cref="SSH2RemotePortForwarding"/>.
         /// </summary>
         /// <returns>an instance of <see cref="SSH2RemotePortForwarding"/></returns>
-        private SSH2RemotePortForwarding CreateRemotePortForwarding() {
+        private SSH2RemotePortForwarding CreateRemotePortForwarding()
+        {
             var instance = new SSH2RemotePortForwarding(_syncHandler, _protocolEventManager);
             _packetInterceptors.Add(instance);
             return instance;
@@ -132,7 +139,8 @@ namespace Granados.SSH2 {
         /// Lazy initialization of the <see cref="SSH2OpenSSHAgentForwarding"/>.
         /// </summary>
         /// <returns>an instance of <see cref="SSH2OpenSSHAgentForwarding"/></returns>
-        private SSH2OpenSSHAgentForwarding CreateAgentForwarding() {
+        private SSH2OpenSSHAgentForwarding CreateAgentForwarding()
+        {
             var instance = new SSH2OpenSSHAgentForwarding(
                                 syncHandler:
                                     _syncHandler,
@@ -141,7 +149,8 @@ namespace Granados.SSH2 {
                                 protocolEventManager:
                                     _protocolEventManager,
                                 createChannel:
-                                    (remoteChannel, serverWindowSize, serverMaxPacketSize) => {
+                                    (remoteChannel, serverWindowSize, serverMaxPacketSize) =>
+                                    {
                                         uint localChannel = _channelCollection.GetNewChannelNumber();
                                         return new SSH2OpenSSHAgentForwardingChannel(
                                                     _syncHandler,
@@ -163,7 +172,8 @@ namespace Granados.SSH2 {
         /// Lazy initialization of the <see cref="SSH2X11Forwarding"/>.
         /// </summary>
         /// <returns>an instance of <see cref="SSH2X11Forwarding"/></returns>
-        private SSH2X11Forwarding CreateX11Forwarding() {
+        private SSH2X11Forwarding CreateX11Forwarding()
+        {
             var instance = new SSH2X11Forwarding(
                             syncHandler:
                                 _syncHandler,
@@ -172,7 +182,8 @@ namespace Granados.SSH2 {
                             x11ConnectionManager:
                                 _x11ConnectionManager,
                             createChannel:
-                                (remoteChannel, serverWindowSize, serverMaxPacketSize) => {
+                                (remoteChannel, serverWindowSize, serverMaxPacketSize) =>
+                                {
                                     uint localChannel = _channelCollection.GetNewChannelNumber();
                                     return new SSH2X11ForwardingChannel(
                                                 _syncHandler,
@@ -193,8 +204,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// SSH protocol (SSH1 or SSH2)
         /// </summary>
-        public SSHProtocol SSHProtocol {
-            get {
+        public SSHProtocol SSHProtocol
+        {
+            get
+            {
                 return SSHProtocol.SSH2;
             }
         }
@@ -202,8 +215,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Connection parameter
         /// </summary>
-        public SSHConnectionParameter ConnectionParameter {
-            get {
+        public SSHConnectionParameter ConnectionParameter
+        {
+            get
+            {
                 return _param;
             }
         }
@@ -211,8 +226,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// A property that indicates whether this connection is open.
         /// </summary>
-        public bool IsOpen {
-            get {
+        public bool IsOpen
+        {
+            get
+            {
                 return _socket.SocketStatus == SocketStatus.Ready && _authenticationStatus == AuthenticationStatus.Success;
             }
         }
@@ -220,8 +237,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Authenticatrion status
         /// </summary>
-        public AuthenticationStatus AuthenticationStatus {
-            get {
+        public AuthenticationStatus AuthenticationStatus
+        {
+            get
+            {
                 return _authenticationStatus;
             }
         }
@@ -229,8 +248,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// A proxy object for reading status of the underlying <see cref="IGranadosSocket"/> object.
         /// </summary>
-        public SocketStatusReader SocketStatusReader {
-            get {
+        public SocketStatusReader SocketStatusReader
+        {
+            get
+            {
                 return _socketStatusReader;
             }
         }
@@ -238,8 +259,10 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Implements <see cref="IDisposable"/>.
         /// </summary>
-        public void Dispose() {
-            if (_socket is IDisposable) {
+        public void Dispose()
+        {
+            if (_socket is IDisposable)
+            {
                 ((IDisposable)_socket).Dispose();
             }
         }
@@ -248,35 +271,43 @@ namespace Granados.SSH2 {
         /// Establishes a SSH connection to the server.
         /// </summary>
         /// <exception cref="SSHException">error</exception>
-        internal void Connect() {
-            if (_authenticationStatus != AuthenticationStatus.NotStarted) {
+        internal void Connect()
+        {
+            if (_authenticationStatus != AuthenticationStatus.NotStarted)
+            {
                 throw new SSHException("Connect() was called twice.");
             }
 
-            try {
+            try
+            {
                 //key exchange
                 _keyExchanger.ExecKeyExchange();
 
                 //user authentication
                 SSH2UserAuthentication userAuthentication =
                     new SSH2UserAuthentication(this, _param, _protocolEventManager, _syncHandler, _sessionID);
-                if (_param.AuthenticationType == AuthenticationType.KeyboardInteractive) {
+                if (_param.AuthenticationType == AuthenticationType.KeyboardInteractive)
+                {
                     userAuthentication.KeyboardInteractiveAuthenticationFinished +=
-                        result => {
+                        result =>
+                        {
                             _authenticationStatus = result ? AuthenticationStatus.Success : AuthenticationStatus.Failure;
                         };
                 }
                 _packetInterceptors.Add(userAuthentication);
                 userAuthentication.ExecAuthentication();
 
-                if (_param.AuthenticationType == AuthenticationType.KeyboardInteractive) {
+                if (_param.AuthenticationType == AuthenticationType.KeyboardInteractive)
+                {
                     _authenticationStatus = AuthenticationStatus.NeedKeyboardInput;
                 }
-                else {
+                else
+                {
                     _authenticationStatus = AuthenticationStatus.Success;
                 }
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 _authenticationStatus = AuthenticationStatus.Failure;
                 Close();
                 throw;
@@ -288,8 +319,10 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="reasonCode">reason code (this value is ignored on the SSH1 connection)</param>
         /// <param name="message">a message to be notified to the server</param>
-        public void Disconnect(DisconnectionReasonCode reasonCode, string message) {
-            if (!this.IsOpen) {
+        public void Disconnect(DisconnectionReasonCode reasonCode, string message)
+        {
+            if (!this.IsOpen)
+            {
                 return;
             }
             _syncHandler.SendDisconnect(
@@ -307,8 +340,10 @@ namespace Granados.SSH2 {
         /// <remarks>
         /// This method closes the underlying socket object.
         /// </remarks>
-        public void Close() {
-            if (_socket.SocketStatus == SocketStatus.Closed || _socket.SocketStatus == SocketStatus.RequestingClose) {
+        public void Close()
+        {
+            if (_socket.SocketStatus == SocketStatus.Closed || _socket.SocketStatus == SocketStatus.RequestingClose)
+            {
                 return;
             }
             _socket.Close();
@@ -317,7 +352,8 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Sends version information to the server.
         /// </summary>
-        internal void SendMyVersion() {
+        internal void SendMyVersion()
+        {
             string cv = _connectionInfo.ClientVersionString;
             string cv2 = cv + _param.VersionEOL;
             byte[] data = Encoding.ASCII.GetBytes(cv2);
@@ -332,14 +368,17 @@ namespace Granados.SSH2 {
         /// <param name="handlerCreator">a function that creates a channel event handler</param>
         /// <returns>a new channel event handler which was created by <paramref name="handlerCreator"/></returns>
         public THandler OpenShell<THandler>(SSHChannelEventHandlerCreator<THandler> handlerCreator)
-                where THandler : ISSHChannelEventHandler {
+                where THandler : ISSHChannelEventHandler
+        {
 
-            if (_x11ConnectionManager != null && !_x11ConnectionManager.SetupDone) {
+            if (_x11ConnectionManager != null && !_x11ConnectionManager.SetupDone)
+            {
                 _x11ConnectionManager.Setup(_param.X11ForwardingParams);
                 var x11Forwarding = _x11Forwarding.Value;   // create instance
             }
 
-            if (_param.AgentForwardingAuthKeyProvider != null) {
+            if (_param.AgentForwardingAuthKeyProvider != null)
+            {
                 var agentForwarding = _agentForwarding.Value;   // create instance
             }
 
@@ -362,7 +401,8 @@ namespace Granados.SSH2 {
         /// <param name="command">command to execute</param>
         /// <returns>a new channel event handler which was created by <paramref name="handlerCreator"/></returns>
         public THandler ExecCommand<THandler>(SSHChannelEventHandlerCreator<THandler> handlerCreator, string command)
-                where THandler : ISSHChannelEventHandler {
+                where THandler : ISSHChannelEventHandler
+        {
 
             return CreateChannelByClient(
                         handlerCreator:
@@ -381,7 +421,8 @@ namespace Granados.SSH2 {
         /// <param name="subsystemName">subsystem name</param>
         /// <returns>a new channel event handler which was created by <paramref name="handlerCreator"/>.</returns>
         public THandler OpenSubsystem<THandler>(SSHChannelEventHandlerCreator<THandler> handlerCreator, string subsystemName)
-                where THandler : ISSHChannelEventHandler {
+                where THandler : ISSHChannelEventHandler
+        {
 
             return CreateChannelByClient(
                         handlerCreator:
@@ -404,7 +445,8 @@ namespace Granados.SSH2 {
         /// <param name="originatorPort">originator's port number</param>
         /// <returns>a new channel event handler which was created by <paramref name="handlerCreator"/>.</returns>
         public THandler ForwardPort<THandler>(SSHChannelEventHandlerCreator<THandler> handlerCreator, string remoteHost, uint remotePort, string originatorIp, uint originatorPort)
-                where THandler : ISSHChannelEventHandler {
+                where THandler : ISSHChannelEventHandler
+        {
 
             return CreateChannelByClient(
                         handlerCreator:
@@ -424,13 +466,15 @@ namespace Granados.SSH2 {
         /// <param name="addressToBind">address to bind on the server</param>
         /// <param name="portNumberToBind">port number to bind on the server</param>
         /// <returns>true if the request has been accepted, otherwise false.</returns>
-        public bool ListenForwardedPort(IRemotePortForwardingHandler requestHandler, string addressToBind, uint portNumberToBind) {
+        public bool ListenForwardedPort(IRemotePortForwardingHandler requestHandler, string addressToBind, uint portNumberToBind)
+        {
 
             return _remotePortForwarding.Value.ListenForwardedPort(
                         requestHandler:
                             requestHandler,
                         createChannel:
-                            (requestInfo, remoteChannel, serverWindowSize, serverMaxPacketSize) => {
+                            (requestInfo, remoteChannel, serverWindowSize, serverMaxPacketSize) =>
+                            {
                                 uint localChannel = _channelCollection.GetNewChannelNumber();
                                 return new SSH2RemotePortForwardingChannel(
                                             _syncHandler,
@@ -457,7 +501,8 @@ namespace Granados.SSH2 {
         /// <param name="addressToBind">address to bind on the server</param>
         /// <param name="portNumberToBind">port number to bind on the server</param>
         /// <returns>true if the remote port forwarding has been cancelled, otherwise false.</returns>
-        public bool CancelForwardedPort(string addressToBind, uint portNumberToBind) {
+        public bool CancelForwardedPort(string addressToBind, uint portNumberToBind)
+        {
             return _remotePortForwarding.Value.CancelForwardedPort(addressToBind, portNumberToBind);
         }
 
@@ -465,7 +510,8 @@ namespace Granados.SSH2 {
         /// Sends ignorable data
         /// </summary>
         /// <param name="message">a message to be sent. the server may record this message into the log.</param>
-        public void SendIgnorableData(string message) {
+        public void SendIgnorableData(string message)
+        {
             Transmit(
                  new SSH2Packet(SSH2PacketType.SSH_MSG_IGNORE)
                      .WriteString(message)
@@ -482,7 +528,8 @@ namespace Granados.SSH2 {
         /// <returns></returns>
         private THandler CreateChannelByClient<TChannel, THandler>(SSHChannelEventHandlerCreator<THandler> handlerCreator, Func<uint, TChannel> channelCreator)
             where TChannel : SSH2ChannelBase
-            where THandler : ISSHChannelEventHandler {
+            where THandler : ISSHChannelEventHandler
+        {
 
             uint localChannel = _channelCollection.GetNewChannelNumber();
             var channel = channelCreator(localChannel);
@@ -490,10 +537,12 @@ namespace Granados.SSH2 {
 
             RegisterChannel(channel, eventHandler);
 
-            try {
+            try
+            {
                 channel.SendOpen();
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 DetachChannel(channel);
                 throw;
             }
@@ -506,7 +555,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="channel">a channel object</param>
         /// <param name="eventHandler">an event handler</param>
-        private void RegisterChannel(SSH2ChannelBase channel, ISSHChannelEventHandler eventHandler) {
+        private void RegisterChannel(SSH2ChannelBase channel, ISSHChannelEventHandler eventHandler)
+        {
             channel.SetHandler(eventHandler);
             channel.Died += DetachChannel;
             _channelCollection.Add(channel, eventHandler);
@@ -516,10 +566,12 @@ namespace Granados.SSH2 {
         /// Detach channel object.
         /// </summary>
         /// <param name="channelOperator">a channel operator</param>
-        private void DetachChannel(ISSHChannel channelOperator) {
+        private void DetachChannel(ISSHChannel channelOperator)
+        {
             var handler = _channelCollection.FindHandler(channelOperator.LocalChannel);
             _channelCollection.Remove(channelOperator);
-            if (handler != null) {
+            if (handler != null)
+            {
                 handler.Dispose();
             }
         }
@@ -528,7 +580,8 @@ namespace Granados.SSH2 {
         /// Sends a packet.
         /// </summary>
         /// <param name="packet">packet to send</param>
-        private void Transmit(SSH2Packet packet) {
+        private void Transmit(SSH2Packet packet)
+        {
             _syncHandler.Send(packet);
         }
 
@@ -536,11 +589,14 @@ namespace Granados.SSH2 {
         /// Processes a received packet.
         /// </summary>
         /// <param name="packet">a received packet</param>
-        private void ProcessPacket(DataFragment packet) {
-            try {
+        private void ProcessPacket(DataFragment packet)
+        {
+            try
+            {
                 DoProcessPacket(packet);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 _eventHandler.OnError(ex);
             }
         }
@@ -549,59 +605,72 @@ namespace Granados.SSH2 {
         /// Processes a received packet.
         /// </summary>
         /// <param name="packet">a received packet</param>
-        private void DoProcessPacket(DataFragment packet) {
-            if (_packetInterceptors.InterceptPacket(packet)) {
+        private void DoProcessPacket(DataFragment packet)
+        {
+            if (_packetInterceptors.InterceptPacket(packet))
+            {
                 return;
             }
 
-            if (packet.Length < 1) {
+            if (packet.Length < 1)
+            {
                 return; // invalid packet
             }
 
             SSH2DataReader reader = new SSH2DataReader(packet);
             SSH2PacketType packetType = (SSH2PacketType)reader.ReadByte();
 
-            if (packetType >= SSH2PacketType.SSH_MSG_CHANNEL_OPEN_CONFIRMATION && packetType <= SSH2PacketType.SSH_MSG_CHANNEL_FAILURE) {
+            if (packetType >= SSH2PacketType.SSH_MSG_CHANNEL_OPEN_CONFIRMATION && packetType <= SSH2PacketType.SSH_MSG_CHANNEL_FAILURE)
+            {
                 uint localChannel = reader.ReadUInt32();
                 var channel = _channelCollection.FindOperator(localChannel) as SSH2ChannelBase;
-                if (channel != null) {
+                if (channel != null)
+                {
                     channel.ProcessPacket(packetType, reader.GetRemainingDataView());
                 }
-                else {
+                else
+                {
                     Debug.WriteLine("unexpected channel pt=" + packetType + " local_channel=" + localChannel.ToString());
                 }
                 return;
             }
 
-            switch (packetType) {
-                case SSH2PacketType.SSH_MSG_DISCONNECT: {
+            switch (packetType)
+            {
+                case SSH2PacketType.SSH_MSG_DISCONNECT:
+                    {
                         int errorcode = reader.ReadInt32();
                         _eventHandler.OnConnectionClosed();
                     }
                     return;
-                case SSH2PacketType.SSH_MSG_IGNORE: {
+                case SSH2PacketType.SSH_MSG_IGNORE:
+                    {
                         _eventHandler.OnIgnoreMessage(reader.ReadByteString());
                     }
                     return;
-                case SSH2PacketType.SSH_MSG_DEBUG: {
+                case SSH2PacketType.SSH_MSG_DEBUG:
+                    {
                         bool alwaysDisplay = reader.ReadBool();
                         string message = reader.ReadUTF8String();
                         string languageTag = reader.ReadString();
                         _eventHandler.OnDebugMessage(alwaysDisplay, message);
                     }
                     return;
-                case SSH2PacketType.SSH_MSG_GLOBAL_REQUEST: {
+                case SSH2PacketType.SSH_MSG_GLOBAL_REQUEST:
+                    {
                         string requestName = reader.ReadString();
                         bool wantReply = reader.ReadBool();
                         _protocolEventManager.Trace("Unhandled request: name={0} wantReply={1}", requestName, wantReply);
-                        if (wantReply) {
+                        if (wantReply)
+                        {
                             Transmit(
                                 new SSH2Packet(SSH2PacketType.SSH_MSG_REQUEST_FAILURE)
                             );
                         }
                     }
                     return;
-                case SSH2PacketType.SSH_MSG_CHANNEL_OPEN: { // unhandled channel-open request
+                case SSH2PacketType.SSH_MSG_CHANNEL_OPEN:
+                    { // unhandled channel-open request
                         string channelType = reader.ReadString();
                         uint remoteChannel = reader.ReadUInt32();
                         _protocolEventManager.Trace("Unhandled channel open: channelType={0} remoteChannel={1}", channelType, remoteChannel);
@@ -622,7 +691,8 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Tasks to do when the underlying socket has been closed. 
         /// </summary>
-        private void OnConnectionClosed() {
+        private void OnConnectionClosed()
+        {
             _channelCollection.ForEach((channel, handler) => handler.OnConnectionLost());
             _packetInterceptors.ForEach(interceptor => interceptor.OnConnectionClosed());
             _eventHandler.OnConnectionClosed();
@@ -631,7 +701,8 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Tasks to do when the underlying socket raised an exception.
         /// </summary>
-        private void OnError(Exception error) {
+        private void OnError(Exception error)
+        {
             _eventHandler.OnError(error);
         }
 
@@ -643,7 +714,8 @@ namespace Granados.SSH2 {
         /// <param name="cipherClient"></param>
         /// <param name="macServer"></param>
         /// <param name="macClient"></param>
-        private void UpdateKey(byte[] sessionID, Cipher cipherServer, Cipher cipherClient, MAC macServer, MAC macClient) {
+        private void UpdateKey(byte[] sessionID, Cipher cipherServer, Cipher cipherClient, MAC macServer, MAC macClient)
+        {
             _sessionID = sessionID;
             _syncHandler.SetCipher(cipherServer, macServer);
             _packetizer.SetCipher(cipherClient, _param.CheckMACError ? macClient : null);
@@ -653,7 +725,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Synchronization of sending/receiving packets.
     /// </summary>
-    internal class SSH2SynchronousPacketHandler : AbstractSynchronousPacketHandler<SSH2Packet> {
+    internal class SSH2SynchronousPacketHandler : AbstractSynchronousPacketHandler<SSH2Packet>
+    {
 
         private readonly object _cipherSync = new object();
         private uint _sequenceNumber = 0;
@@ -669,7 +742,8 @@ namespace Granados.SSH2 {
         /// <param name="handler">the next handler received packets are redirected to.</param>
         /// <param name="protocolEventManager">protocol event manager</param>
         public SSH2SynchronousPacketHandler(IGranadosSocket socket, IDataHandler handler, SSHProtocolEventManager protocolEventManager)
-            : base(socket, handler) {
+            : base(socket, handler)
+        {
 
             _protocolEventManager = protocolEventManager;
         }
@@ -679,8 +753,10 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="cipher">cipher to encrypt a packet to be sent.</param>
         /// <param name="mac">MAC for a packet to be sent.</param>
-        public void SetCipher(Cipher cipher, MAC mac) {
-            lock (_cipherSync) {
+        public void SetCipher(Cipher cipher, MAC mac)
+        {
+            lock (_cipherSync)
+            {
                 _cipher = cipher;
                 _mac = mac;
             }
@@ -694,8 +770,10 @@ namespace Granados.SSH2 {
         /// </remarks>
         /// <param name="packet">a packet object</param>
         /// <returns>binary image of the packet</returns>
-        protected override DataFragment GetPacketImage(SSH2Packet packet) {
-            lock (_cipherSync) {
+        protected override DataFragment GetPacketImage(SSH2Packet packet)
+        {
+            lock (_cipherSync)
+            {
                 return packet.GetImage(_cipher, _mac, _sequenceNumber++);
             }
         }
@@ -704,7 +782,8 @@ namespace Granados.SSH2 {
         /// Allows to reuse a packet object.
         /// </summary>
         /// <param name="packet">a packet object</param>
-        protected override void Recycle(SSH2Packet packet) {
+        protected override void Recycle(SSH2Packet packet)
+        {
             packet.Recycle();
         }
 
@@ -712,9 +791,11 @@ namespace Granados.SSH2 {
         /// Do additional work for a packet to be sent.
         /// </summary>
         /// <param name="packet">a packet object</param>
-        protected override void BeforeSend(SSH2Packet packet) {
+        protected override void BeforeSend(SSH2Packet packet)
+        {
             SSH2PacketType packetType = packet.GetPacketType();
-            switch (packetType) {
+            switch (packetType)
+            {
                 case SSH2PacketType.SSH_MSG_CHANNEL_DATA:
                 case SSH2PacketType.SSH_MSG_CHANNEL_EXTENDED_DATA:
                 case SSH2PacketType.SSH_MSG_IGNORE:
@@ -729,13 +810,16 @@ namespace Granados.SSH2 {
         /// Do additional work for a received packet.
         /// </summary>
         /// <param name="packet">a packet image</param>
-        protected override void AfterReceived(DataFragment packet) {
-            if (packet.Length == 0) {
+        protected override void AfterReceived(DataFragment packet)
+        {
+            if (packet.Length == 0)
+            {
                 return;
             }
 
             SSH2PacketType packetType = (SSH2PacketType)packet.Data[packet.Offset];
-            switch (packetType) {
+            switch (packetType)
+            {
                 case SSH2PacketType.SSH_MSG_CHANNEL_DATA:
                 case SSH2PacketType.SSH_MSG_CHANNEL_EXTENDED_DATA:
                 case SSH2PacketType.SSH_MSG_IGNORE:
@@ -751,7 +835,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet object</param>
         /// <returns>packet name.</returns>
-        protected override string GetMessageName(SSH2Packet packet) {
+        protected override string GetMessageName(SSH2Packet packet)
+        {
             return packet.GetPacketType().ToString();
         }
 
@@ -760,11 +845,14 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>packet name.</returns>
-        protected override string GetMessageName(DataFragment packet) {
-            if (packet.Length > 0) {
+        protected override string GetMessageName(DataFragment packet)
+        {
+            if (packet.Length > 0)
+            {
                 return ((SSH2PacketType)packet.Data[packet.Offset]).ToString();
             }
-            else {
+            else
+            {
                 return "?";
             }
         }
@@ -773,13 +861,15 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Class for supporting key exchange sequence.
     /// </summary>
-    internal class SSH2KeyExchanger : ISSHPacketInterceptor {
+    internal class SSH2KeyExchanger : ISSHPacketInterceptor
+    {
         #region SSH2KeyExchanger
 
         private const int PASSING_TIMEOUT = 1000;
         private const int RESPONSE_TIMEOUT = 5000;
 
-        private enum SequenceStatus {
+        private enum SequenceStatus
+        {
             /// <summary>next key exchange can be started</summary>
             Idle,
             /// <summary>key exchange has been failed</summary>
@@ -800,7 +890,8 @@ namespace Granados.SSH2 {
             WaitUpdateCipher,
         }
 
-        private class KexState : IDisposable {
+        private class KexState : IDisposable
+        {
             // payload of KEX_INIT message
             public byte[] serverKEXINITPayload;
             public byte[] clientKEXINITPayload;
@@ -823,14 +914,17 @@ namespace Granados.SSH2 {
             public BigInteger secret;   // shared secret
             public byte[] hash;     // exchange hash
 
-            public void Dispose() {
-                if (hashAlgorithm != null) {
+            public void Dispose()
+            {
+                if (hashAlgorithm != null)
+                {
                     hashAlgorithm.Dispose();
                 }
             }
         }
 
-        private class CipherSettings {
+        private class CipherSettings
+        {
             public Cipher cipherServer;
             public Cipher cipherClient;
             public MAC macServer;
@@ -861,7 +955,8 @@ namespace Granados.SSH2 {
                     SSHConnectionParameter param,
                     SSHProtocolEventManager protocolEventManager,
                     SSH2ConnectionInfo info,
-                    UpdateKeyDelegate updateKey) {
+                    UpdateKeyDelegate updateKey)
+        {
             _syncHandler = syncHandler;
             _param = param;
             _protocolEventManager = protocolEventManager;
@@ -874,12 +969,16 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>result</returns>
-        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet) {
+        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet)
+        {
             SSH2PacketType packetType = (SSH2PacketType)packet[0];
-            lock (_sequenceLock) {
-                switch (_sequenceStatus) {
+            lock (_sequenceLock)
+            {
+                switch (_sequenceStatus)
+                {
                     case SequenceStatus.Idle:
-                        if (packetType == SSH2PacketType.SSH_MSG_KEXINIT) {
+                        if (packetType == SSH2PacketType.SSH_MSG_KEXINIT)
+                        {
                             _sequenceStatus = SequenceStatus.InitiatedByServer;
                             StartKeyExchangeAsync(packet);
                             return SSHPacketInterceptorResult.Consumed;
@@ -888,7 +987,8 @@ namespace Granados.SSH2 {
                     case SequenceStatus.InitiatedByServer:
                         break;
                     case SequenceStatus.InitiatedByClient:
-                        if (packetType == SSH2PacketType.SSH_MSG_KEXINIT) {
+                        if (packetType == SSH2PacketType.SSH_MSG_KEXINIT)
+                        {
                             _sequenceStatus = SequenceStatus.KexInitReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -897,18 +997,22 @@ namespace Granados.SSH2 {
                     case SequenceStatus.KexInitReceived:
                         break;
                     case SequenceStatus.WaitKexDHReplay:
-                        if (packetType == SSH2PacketType.SSH_MSG_KEXDH_REPLY) {
+                        if (packetType == SSH2PacketType.SSH_MSG_KEXDH_REPLY)
+                        {
                             _sequenceStatus = SequenceStatus.WaitNewKeys;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
                         break;
                     case SequenceStatus.WaitNewKeys:
-                        if (packetType == SSH2PacketType.SSH_MSG_NEWKEYS) {
+                        if (packetType == SSH2PacketType.SSH_MSG_NEWKEYS)
+                        {
                             _sequenceStatus = SequenceStatus.WaitUpdateCipher;
-                            if (_receivedPacket.TrySet(packet, PASSING_TIMEOUT)) {
+                            if (_receivedPacket.TrySet(packet, PASSING_TIMEOUT))
+                            {
                                 // block this thread until the cipher settings are updated.
-                                do {
+                                do
+                                {
                                     Monitor.Wait(_sequenceLock);
                                 } while (_sequenceStatus == SequenceStatus.WaitUpdateCipher);
                             }
@@ -925,9 +1029,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Handles connection close.
         /// </summary>
-        public void OnConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.ConnectionClosed) {
+        public void OnConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.ConnectionClosed)
+                {
                     _sequenceStatus = SequenceStatus.ConnectionClosed;
                     DataFragment dummyPacket = new DataFragment(new byte[1] { 0xff }, 0, 1);
                     _receivedPacket.TrySet(dummyPacket, PASSING_TIMEOUT);
@@ -941,9 +1048,12 @@ namespace Granados.SSH2 {
         /// <remarks>
         /// if an error has been occurred during the key-exchange, an exception will be thrown.
         /// </remarks>
-        public void ExecKeyExchange() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.Idle) {
+        public void ExecKeyExchange()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.Idle)
+                {
                     throw new InvalidOperationException(Strings.GetString("RequestedTaskIsAlreadyRunning"));
                 }
                 _sequenceStatus = SequenceStatus.InitiatedByClient;
@@ -958,7 +1068,8 @@ namespace Granados.SSH2 {
         /// a received SSH_MSG_KEXINIT packet image if the server initiates the key exchange,
         /// or null if the client initiates the key exchange.
         /// </param>
-        private Task StartKeyExchangeAsync(DataFragment kexinitFromServer) {
+        private Task StartKeyExchangeAsync(DataFragment kexinitFromServer)
+        {
             return Task.Run(() => DoKeyExchange(kexinitFromServer));
         }
 
@@ -970,9 +1081,12 @@ namespace Granados.SSH2 {
         /// or null if the client initiates the key exchange.
         /// </param>
         /// <exception cref="SSHException">no response</exception>
-        private void DoKeyExchange(DataFragment kexinitFromServer) {
-            try {
-                using (KexState state = new KexState()) {
+        private void DoKeyExchange(DataFragment kexinitFromServer)
+        {
+            try
+            {
+                using (KexState state = new KexState())
+                {
                     KexInit(state, kexinitFromServer);
 
                     KexDiffieHellman(state);
@@ -989,21 +1103,25 @@ namespace Granados.SSH2 {
                         cipherSettings.macClient);
                 }
 
-                lock (_sequenceLock) {
+                lock (_sequenceLock)
+                {
                     _sequenceStatus = SequenceStatus.Idle;
                     Monitor.PulseAll(_sequenceLock);
                 }
 
                 return; // success
             }
-            catch (Exception) {
-                lock (_sequenceLock) {
+            catch (Exception)
+            {
+                lock (_sequenceLock)
+                {
                     _sequenceStatus = SequenceStatus.Failed;
                     Monitor.PulseAll(_sequenceLock);
                 }
                 throw;
             }
-            finally {
+            finally
+            {
                 _receivedPacket.Clear();
             }
         }
@@ -1017,15 +1135,18 @@ namespace Granados.SSH2 {
         /// or null if the client initiates the key exchange.
         /// </param>
         /// <exception cref="SSHException">no response</exception>
-        private void KexInit(KexState state, DataFragment kexinitFromServer) {
-            lock (_sequenceLock) {
+        private void KexInit(KexState state, DataFragment kexinitFromServer)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.InitiatedByClient
                     || _sequenceStatus == SequenceStatus.InitiatedByServer
                     || _sequenceStatus == SequenceStatus.KexInitReceived);
             }
 
-            if (kexinitFromServer != null) {
+            if (kexinitFromServer != null)
+            {
                 ProcessKEXINIT(kexinitFromServer, state);
             }
 
@@ -1034,7 +1155,8 @@ namespace Granados.SSH2 {
 
             state.clientKEXINITPayload = packetToSend.GetPayloadBytes();
 
-            if (kexinitFromServer != null) {
+            if (kexinitFromServer != null)
+            {
                 // if the key exchange was initiated by the server,
                 // no need to wait for the SSH_MSG_KEXINIT response.
                 _syncHandler.Send(packetToSend);
@@ -1047,11 +1169,13 @@ namespace Granados.SSH2 {
             _protocolEventManager.Trace(traceMsg);
 
             DataFragment response = null;
-            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
                 throw new SSHException(Strings.GetString("ServerDoesntRespond"));
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.KexInitReceived);    // already set in FeedReceivedPacket
             }
@@ -1064,8 +1188,10 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="state">informations about current key exchange</param>
         /// <exception cref="SSHException">no response</exception>
-        private void KexDiffieHellman(KexState state) {
-            lock (_sequenceLock) {
+        private void KexDiffieHellman(KexState state)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.KexInitReceived || _sequenceStatus == SequenceStatus.InitiatedByServer);
                 _sequenceStatus = SequenceStatus.WaitKexDHReplay;
@@ -1075,36 +1201,44 @@ namespace Granados.SSH2 {
 
             // send KEXDH_INIT
             SSH2Packet packetToSend;
-            if (useEcdh) {
+            if (useEcdh)
+            {
                 packetToSend = BuildKEX_ECDH_INITPacket(state);
-            } else {
+            }
+            else
+            {
                 packetToSend = BuildKEXDHINITPacket(state);
             }
 
             _syncHandler.Send(packetToSend);
 
             DataFragment response = null;
-            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
                 throw new SSHException(Strings.GetString("ServerDoesntRespond"));
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.WaitNewKeys || _sequenceStatus == SequenceStatus.WaitUpdateCipher);    // already set in FeedReceivedPacket
             }
 
             bool isAccepted;
-            if (useEcdh) {
+            if (useEcdh)
+            {
                 isAccepted = ProcessKEX_ECDH_REPLY(response, state);
             }
-            else {
+            else
+            {
                 isAccepted = ProcessKEXDHREPLY(response, state);
             }
 
             _protocolEventManager.Trace(
                 isAccepted ? "host key has been accepted" : "host key has been denied");
 
-            if (!isAccepted) {
+            if (!isAccepted)
+            {
                 throw new SSHException(Strings.GetString("HostKeyDenied"));
             }
         }
@@ -1115,8 +1249,10 @@ namespace Granados.SSH2 {
         /// <param name="state">informations about current key exchange</param>
         /// <returns>true if the sequence was succeeded</returns>
         /// <exception cref="SSHException">no response</exception>
-        private void KexNewKeys(KexState state) {
-            lock (_sequenceLock) {
+        private void KexNewKeys(KexState state)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.WaitNewKeys || _sequenceStatus == SequenceStatus.WaitUpdateCipher);
             }
@@ -1125,11 +1261,13 @@ namespace Granados.SSH2 {
             _syncHandler.Send(packetToSend);
 
             DataFragment response = null;
-            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
                 throw new SSHException(Strings.GetString("ServerDoesntRespond"));
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
             }
 
@@ -1141,7 +1279,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="traceMessage">trace message will be set</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildKEXINITPacket(out string traceMessage) {
+        private SSH2Packet BuildKEXINITPacket(out string traceMessage)
+        {
             const string MAC_ALGORITHM = "hmac-sha1";
 
             SSH2Packet packet =
@@ -1183,7 +1322,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a received packet image</param>
         /// <param name="state">informations about current key exchange</param>
-        private void ProcessKEXINIT(DataFragment packet, KexState state) {
+        private void ProcessKEXINIT(DataFragment packet, KexState state)
+        {
 
             state.serverKEXINITPayload = packet.GetBytes();
 
@@ -1222,7 +1362,8 @@ namespace Granados.SSH2 {
             bool firstKexPacketFollows = reader.ReadBool();
             int reserved = reader.ReadInt32();
 
-            if (firstKexPacketFollows) {
+            if (firstKexPacketFollows)
+            {
                 throw new SSHException(Strings.GetString("AlgorithmNegotiationFailed"));
             }
 
@@ -1253,14 +1394,16 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="state">informations about current key exchange</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildKEXDHINITPacket(KexState state) {
+        private SSH2Packet BuildKEXDHINITPacket(KexState state)
+        {
             //Round1 computes and sends [e]
             state.p = GetDiffieHellmanPrime(_cInfo.KEXAlgorithm.Value);
             //Generate x : 1 < x < (p-1)/2
             int xBytes = (state.p.BitCount() - 2) / 8;
             BigInteger x;
             Rng rng = RngManager.GetSecureRng();
-            do {
+            do
+            {
                 byte[] sx = new byte[xBytes];
                 rng.GetBytes(sx);
                 x = new BigInteger(sx);
@@ -1268,7 +1411,8 @@ namespace Granados.SSH2 {
             state.x = x;
             state.e = new BigInteger(2).ModPow(x, state.p);
 
-            switch (_cInfo.KEXAlgorithm.Value) {
+            switch (_cInfo.KEXAlgorithm.Value)
+            {
                 case KexAlgorithm.DH_G1_SHA1:
                 case KexAlgorithm.DH_G14_SHA1:
                     state.hashAlgorithm = new SHA1CryptoServiceProvider();
@@ -1296,9 +1440,11 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="state">informations about current key exchange</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildKEX_ECDH_INITPacket(KexState state) {
+        private SSH2Packet BuildKEX_ECDH_INITPacket(KexState state)
+        {
             string curveName;
-            switch(_cInfo.KEXAlgorithm.Value) {
+            switch (_cInfo.KEXAlgorithm.Value)
+            {
                 case KexAlgorithm.ECDH_SHA2_NISTP256:
                     curveName = "nistp256";
                     break;
@@ -1313,7 +1459,8 @@ namespace Granados.SSH2 {
             }
 
             state.ecdhCurve = EllipticCurve.FindByName(curveName);
-            if (state.ecdhCurve == null) {
+            if (state.ecdhCurve == null)
+            {
                 throw new SSHException("Unknown elliptic curve : " + curveName);
             }
 
@@ -1337,7 +1484,8 @@ namespace Granados.SSH2 {
         /// <param name="packet">a received packet image</param>
         /// <param name="state">informations about current key exchange</param>
         /// <returns>true if verification was succeeded</returns>
-        private bool ProcessKEXDHREPLY(DataFragment packet, KexState state) {
+        private bool ProcessKEXDHREPLY(DataFragment packet, KexState state)
+        {
             //Round2 receives response
             SSH2DataReader reader = new SSH2DataReader(packet);
             SSH2PacketType packetType = (SSH2PacketType)reader.ReadByte();
@@ -1369,7 +1517,8 @@ namespace Granados.SSH2 {
         /// <param name="packet">a received packet image</param>
         /// <param name="state">informations about current key exchange</param>
         /// <returns>true if verification was succeeded</returns>
-        private bool ProcessKEX_ECDH_REPLY(DataFragment packet, KexState state) {
+        private bool ProcessKEX_ECDH_REPLY(DataFragment packet, KexState state)
+        {
             SSH2DataReader reader = new SSH2DataReader(packet);
             SSH2PacketType packetType = (SSH2PacketType)reader.ReadByte();
 
@@ -1381,13 +1530,15 @@ namespace Granados.SSH2 {
             // get shared secret
             ECPoint serverPublicKeyPoint;
             if (!ECPoint.Parse(serverPublicKey, state.ecdhCurve, out serverPublicKeyPoint)
-                    || !state.ecdhCurve.ValidatePoint(serverPublicKeyPoint)) {
+                    || !state.ecdhCurve.ValidatePoint(serverPublicKeyPoint))
+            {
                 _protocolEventManager.Trace("Server's ephemeral public key is invalid");
                 return false;
             }
 
             ECPoint p = state.ecdhCurve.PointMul(state.ecdhCurve.Cofactor, state.ecdhPrivateKey, serverPublicKeyPoint, true);
-            if (p == null) {
+            if (p == null)
+            {
                 _protocolEventManager.Trace("Failed to get a shared secret");
                 return false;
             }
@@ -1416,7 +1567,8 @@ namespace Granados.SSH2 {
         /// <param name="signature">signature of exchange hash</param>
         /// <param name="hash">computed exchange hash</param>
         /// <returns>true if server host key and certificates were verified and accepted.</returns>
-        private bool VerifyHostKeyAndUpdateSessionID(byte[] ks, byte[] signature, byte[] hash) {
+        private bool VerifyHostKeyAndUpdateSessionID(byte[] ks, byte[] signature, byte[] hash)
+        {
             _protocolEventManager.Trace("verifying host key");
 
             bool verifyExternally = (_sessionID == null) ? true : false;
@@ -1424,7 +1576,8 @@ namespace Granados.SSH2 {
 
             _protocolEventManager.Trace("verifying host key : {0}", accepted ? "accepted" : "rejected");
 
-            if (accepted && _sessionID == null) {
+            if (accepted && _sessionID == null)
+            {
                 //Debug.WriteLine("hash="+DebugUtil.DumpByteArray(hash));
                 _sessionID = hash;
             }
@@ -1435,7 +1588,8 @@ namespace Granados.SSH2 {
         /// Builds a SSH_MSG_NEWKEYS packet.
         /// </summary>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildNEWKEYSPacket() {
+        private SSH2Packet BuildNEWKEYSPacket()
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_NEWKEYS);
         }
 
@@ -1444,7 +1598,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="state">informations about current key exchange</param>
         /// <returns>cipher settings</returns>
-        private CipherSettings GetCipherSettings(KexState state) {
+        private CipherSettings GetCipherSettings(KexState state)
+        {
             CipherSettings settings = new CipherSettings();
 
             settings.cipherServer =
@@ -1477,49 +1632,58 @@ namespace Granados.SSH2 {
         /// <param name="hash">computed exchange hash</param>
         /// <param name="verifyExternally">specify true if the additional verification by delegate VerifySSHHostKey is required.</param>
         /// <returns>true if server host key and certificates were verified and accepted.</returns>
-        private bool VerifyHostKey(byte[] ks, byte[] signature, byte[] hash, bool verifyExternally) {
+        private bool VerifyHostKey(byte[] ks, byte[] signature, byte[] hash, bool verifyExternally)
+        {
             SSH2DataReader ksReader = new SSH2DataReader(ks);
             string algorithm = ksReader.ReadString();
-            if (algorithm != _cInfo.HostKeyAlgorithm.Value.GetAlgorithmName()) {
+            if (algorithm != _cInfo.HostKeyAlgorithm.Value.GetAlgorithmName())
+            {
                 throw new SSHException(Strings.GetString("HostKeyAlgorithmMismatch"));
             }
 
             SSH2DataReader sigReader = new SSH2DataReader(signature);
             string sigAlgorithm = sigReader.ReadString();
-            if (sigAlgorithm != algorithm) {
+            if (sigAlgorithm != algorithm)
+            {
                 throw new SSHException(Strings.GetString("HostKeyAlgorithmMismatch"));
             }
             byte[] signatureBlob = sigReader.ReadByteString();
 
-            if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.RSA) {
+            if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.RSA)
+            {
                 RSAPublicKey pk = RSAPublicKey.ReadFrom(ksReader);
                 pk.VerifyWithSHA1(signatureBlob, new SHA1CryptoServiceProvider().ComputeHash(hash));
                 _cInfo.HostKey = pk;
             }
-            else if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.DSA) {
+            else if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.DSA)
+            {
                 DSAPublicKey pk = DSAPublicKey.ReadFrom(ksReader);
                 pk.Verify(signatureBlob, new SHA1CryptoServiceProvider().ComputeHash(hash));
                 _cInfo.HostKey = pk;
             }
             else if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ECDSA_SHA2_NISTP256
                     || _cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ECDSA_SHA2_NISTP384
-                    || _cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ECDSA_SHA2_NISTP521) {
+                    || _cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ECDSA_SHA2_NISTP521)
+            {
 
                 ECDSAPublicKey pk = ECDSAPublicKey.ReadFrom(ksReader);
                 pk.Verify(signatureBlob, hash);
                 _cInfo.HostKey = pk;
             }
-            else if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ED25519) {
+            else if (_cInfo.HostKeyAlgorithm == PublicKeyAlgorithm.ED25519)
+            {
                 EDDSAPublicKey pk = EDDSAPublicKey.ReadFrom(_cInfo.HostKeyAlgorithm.Value, ksReader);
                 pk.Verify(signatureBlob, hash);
                 _cInfo.HostKey = pk;
             }
-            else {
+            else
+            {
                 throw new SSHException(Strings.GetString("UnsupportedHostKeyAlgorithm"));
             }
 
             //ask the client whether he accepts the host key
-            if (verifyExternally && _param.VerifySSHHostKey != null) {
+            if (verifyExternally && _param.VerifySSHHostKey != null)
+            {
                 return _param.VerifySSHHostKey(_cInfo.GetSSHHostKeyInformationProvider());
             }
 
@@ -1535,28 +1699,34 @@ namespace Granados.SSH2 {
         /// <param name="length">key length</param>
         /// <param name="hashAlgorithm">hashing algorithm</param>
         /// <returns></returns>
-        private byte[] DeriveKey(BigInteger k, byte[] h, char letter, int length, HashAlgorithm hashAlgorithm) {
+        private byte[] DeriveKey(BigInteger k, byte[] h, char letter, int length, HashAlgorithm hashAlgorithm)
+        {
             SSH2PayloadImageBuilder image = new SSH2PayloadImageBuilder();
             ByteBuffer hashBuff = new ByteBuffer(length * 2, -1);
 
-            while (true) {
+            while (true)
+            {
                 image.Clear();
                 image.WriteBigInteger(k);
                 image.Write(h);
-                if (hashBuff.Length == 0) {
+                if (hashBuff.Length == 0)
+                {
                     image.WriteByte((byte)letter);
                     image.Write(_sessionID);
                 }
-                else {
+                else
+                {
                     image.Payload.Append(hashBuff);
                 }
                 byte[] hash = hashAlgorithm.ComputeHash(image.GetBytes());
 
                 hashBuff.Append(hash);
 
-                if (hashBuff.Length > length) {
+                if (hashBuff.Length > length)
+                {
                     int trimLen = hashBuff.Length - length;
-                    if (trimLen > 0) {
+                    if (trimLen > 0)
+                    {
                         hashBuff.RemoveTail(trimLen);
                     }
                     return hashBuff.GetBytes();
@@ -1571,9 +1741,11 @@ namespace Granados.SSH2 {
         /// <param name="nameList">name-list string</param>
         /// <param name="algorithmName">algorithm name</param>
         /// <exception cref="SSHException">the name list doesn't contain the specified algorithm</exception>
-        private static void CheckAlgorithmSupport(string title, string nameList, string algorithmName) {
+        private static void CheckAlgorithmSupport(string title, string nameList, string algorithmName)
+        {
             string[] names = nameList.Split(',');
-            if (names.Contains(algorithmName)) {
+            if (names.Contains(algorithmName))
+            {
                 return; // found
             }
             throw new SSHException(
@@ -1586,11 +1758,14 @@ namespace Granados.SSH2 {
         /// <param name="candidates">candidate algorithms</param>
         /// <returns>key exchange algorithm to use</returns>
         /// <exception cref="SSHException">no suitable algorithm was found</exception>
-        private KexAlgorithm DecideKexAlgorithm(string candidates) {
+        private KexAlgorithm DecideKexAlgorithm(string candidates)
+        {
             string[] candidateNames = candidates.Split(',');
-            foreach (KexAlgorithm algorithm in AlgorithmSpecUtil<KexAlgorithm>.GetAlgorithmsByPriorityOrder()) {
+            foreach (KexAlgorithm algorithm in AlgorithmSpecUtil<KexAlgorithm>.GetAlgorithmsByPriorityOrder())
+            {
                 string algorithmName = AlgorithmSpecUtil<KexAlgorithm>.GetAlgorithmName(algorithm);
-                if (candidateNames.Contains(algorithmName)) {
+                if (candidateNames.Contains(algorithmName))
+                {
                     return algorithm;
                 }
             }
@@ -1603,11 +1778,14 @@ namespace Granados.SSH2 {
         /// <param name="candidates">candidate algorithms</param>
         /// <returns>host key algorithm to use</returns>
         /// <exception cref="SSHException">no suitable algorithm was found</exception>
-        private PublicKeyAlgorithm DecideHostKeyAlgorithm(string candidates) {
+        private PublicKeyAlgorithm DecideHostKeyAlgorithm(string candidates)
+        {
             string[] candidateNames = candidates.Split(',');
-            foreach (PublicKeyAlgorithm pref in _param.PreferableHostKeyAlgorithms) {
+            foreach (PublicKeyAlgorithm pref in _param.PreferableHostKeyAlgorithms)
+            {
                 string prefName = pref.GetAlgorithmName();
-                if (candidateNames.Contains(prefName)) {
+                if (candidateNames.Contains(prefName))
+                {
                     return pref;
                 }
             }
@@ -1620,11 +1798,14 @@ namespace Granados.SSH2 {
         /// <param name="candidates">candidate algorithms</param>
         /// <returns>cipher algorithm to use</returns>
         /// <exception cref="SSHException">no suitable algorithm was found</exception>
-        private CipherAlgorithm DecideCipherAlgorithm(string candidates) {
+        private CipherAlgorithm DecideCipherAlgorithm(string candidates)
+        {
             string[] candidateNames = candidates.Split(',');
-            foreach (CipherAlgorithm pref in _param.PreferableCipherAlgorithms) {
+            foreach (CipherAlgorithm pref in _param.PreferableCipherAlgorithms)
+            {
                 string prefName = CipherFactory.AlgorithmToSSH2Name(pref);
-                if (candidateNames.Contains(prefName)) {
+                if (candidateNames.Contains(prefName))
+                {
                     return pref;
                 }
             }
@@ -1635,7 +1816,8 @@ namespace Granados.SSH2 {
         /// Makes kex_algorithms field for the SSH_MSG_KEXINIT
         /// </summary>
         /// <returns>name list</returns>
-        private string GetSupportedKexAlgorithms() {
+        private string GetSupportedKexAlgorithms()
+        {
             return string.Join(",", AlgorithmSpecUtil<KexAlgorithm>.GetAlgorithmNamesByPriorityOrder());
         }
 
@@ -1643,8 +1825,10 @@ namespace Granados.SSH2 {
         /// Makes server_host_key_algorithms field for the SSH_MSG_KEXINIT
         /// </summary>
         /// <returns>name list</returns>
-        private string FormatHostKeyAlgorithmDescription() {
-            if (_param.PreferableHostKeyAlgorithms.Length == 0) {
+        private string FormatHostKeyAlgorithmDescription()
+        {
+            if (_param.PreferableHostKeyAlgorithms.Length == 0)
+            {
                 throw new SSHException("HostKeyAlgorithm is not set");
             }
             return string.Join(",",
@@ -1656,8 +1840,10 @@ namespace Granados.SSH2 {
         /// Makes encryption_algorithms_client_to_server field for the SSH_MSG_KEXINIT
         /// </summary>
         /// <returns>name list</returns>
-        private string FormatCipherAlgorithmDescription() {
-            if (_param.PreferableCipherAlgorithms.Length == 0) {
+        private string FormatCipherAlgorithmDescription()
+        {
+            if (_param.PreferableCipherAlgorithms.Length == 0)
+            {
                 throw new SSHException("CipherAlgorithm is not set");
             }
             return string.Join(",",
@@ -1668,9 +1854,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Check ConnectionClosed.
         /// </summary>
-        private void CheckConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus == SequenceStatus.ConnectionClosed) {
+        private void CheckConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus == SequenceStatus.ConnectionClosed)
+                {
                     throw new SSHException(Strings.GetString("ConnectionClosed"));
                 }
             }
@@ -1686,10 +1875,13 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="algorithm">key exchange algorithm</param>
         /// <returns>a prime number</returns>
-        private BigInteger GetDiffieHellmanPrime(KexAlgorithm algorithm) {
-            switch (algorithm) {
+        private BigInteger GetDiffieHellmanPrime(KexAlgorithm algorithm)
+        {
+            switch (algorithm)
+            {
                 case KexAlgorithm.DH_G1_SHA1:
-                    if (_dh_g1_prime == null) {
+                    if (_dh_g1_prime == null)
+                    {
                         _dh_g1_prime = new BigInteger(ToBytes(
                             // RFC2409 1024-bit MODP Group 2
                             "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" +
@@ -1704,7 +1896,8 @@ namespace Granados.SSH2 {
 
                 case KexAlgorithm.DH_G14_SHA1:
                 case KexAlgorithm.DH_G14_SHA256:
-                    if (_dh_g14_prime == null) {
+                    if (_dh_g14_prime == null)
+                    {
                         _dh_g14_prime = new BigInteger(ToBytes(
                             // RFC3526 2048-bit MODP Group 14
                             "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" +
@@ -1723,7 +1916,8 @@ namespace Granados.SSH2 {
                     return _dh_g14_prime;
 
                 case KexAlgorithm.DH_G16_SHA512:
-                    if (_dh_g16_prime == null) {
+                    if (_dh_g16_prime == null)
+                    {
                         _dh_g16_prime = new BigInteger(ToBytes(
                             // RFC3526 4096-bit MODP Group 16
                             "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" +
@@ -1753,7 +1947,8 @@ namespace Granados.SSH2 {
                     return _dh_g16_prime;
 
                 case KexAlgorithm.DH_G18_SHA512:
-                    if (_dh_g18_prime == null) {
+                    if (_dh_g18_prime == null)
+                    {
                         _dh_g18_prime = new BigInteger(ToBytes(
                             // RFC3526 8192-bit MODP Group 18
                             "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" +
@@ -1808,7 +2003,8 @@ namespace Granados.SSH2 {
             }
         }
 
-        private static byte[] ToBytes(string hexnum) {
+        private static byte[] ToBytes(string hexnum)
+        {
             return BigIntegerConverter.ParseHex(hexnum);
         }
 
@@ -1818,7 +2014,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Class for supporting user authentication
     /// </summary>
-    internal class SSH2UserAuthentication : ISSHPacketInterceptor {
+    internal class SSH2UserAuthentication : ISSHPacketInterceptor
+    {
         #region SSH2UserAuthentication
 
         private const int PASSING_TIMEOUT = 1000;
@@ -1839,7 +2036,8 @@ namespace Granados.SSH2 {
 
         internal event Action<bool> KeyboardInteractiveAuthenticationFinished;
 
-        private enum SequenceStatus {
+        private enum SequenceStatus
+        {
             /// <summary>authentication can be started</summary>
             Idle,
             /// <summary>authentication has been finished.</summary>
@@ -1892,7 +2090,8 @@ namespace Granados.SSH2 {
                     SSHConnectionParameter param,
                     SSHProtocolEventManager protocolEventManager,
                     SSH2SynchronousPacketHandler syncHandler,
-                    byte[] sessionID) {
+                    byte[] sessionID)
+        {
             _connection = connection;
             _param = param;
             _protocolEventManager = protocolEventManager;
@@ -1908,20 +2107,25 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>result</returns>
-        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet) {
-            if (_sequenceStatus == SequenceStatus.Done) {   // fast check
+        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet)
+        {
+            if (_sequenceStatus == SequenceStatus.Done)
+            {   // fast check
                 return SSHPacketInterceptorResult.Finished;
             }
 
             SSH2PacketType packetType = (SSH2PacketType)packet[0];
-            lock (_sequenceLock) {
-                switch (_sequenceStatus) {
+            lock (_sequenceLock)
+            {
+                switch (_sequenceStatus)
+                {
                     case SequenceStatus.Idle:
                     case SequenceStatus.Done:
                     case SequenceStatus.StartAuthentication:
                         break;
                     case SequenceStatus.WaitServiceAccept:
-                        if (packetType == SSH2PacketType.SSH_MSG_SERVICE_ACCEPT) {
+                        if (packetType == SSH2PacketType.SSH_MSG_SERVICE_ACCEPT)
+                        {
                             _sequenceStatus = SequenceStatus.ServiceAcceptReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -1934,22 +2138,26 @@ namespace Granados.SSH2 {
 
                     case SequenceStatus.KI_WaitUserAuthInfoRequest:
                     case SequenceStatus.KI_BannerReceived:
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_INFO_REQUEST) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_INFO_REQUEST)
+                        {
                             _sequenceStatus = SequenceStatus.KI_UserAuthInfoRequestReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_SUCCESS) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_SUCCESS)
+                        {
                             _sequenceStatus = SequenceStatus.KI_SuccessReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_FAILURE) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_FAILURE)
+                        {
                             _sequenceStatus = SequenceStatus.KI_FailureReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_BANNER) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_BANNER)
+                        {
                             _sequenceStatus = SequenceStatus.KI_BannerReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -1964,17 +2172,20 @@ namespace Granados.SSH2 {
 
                     case SequenceStatus.PA_WaitUserAuthResponse:
                     case SequenceStatus.PA_BannerReceived:
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_SUCCESS) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_SUCCESS)
+                        {
                             _sequenceStatus = SequenceStatus.PA_SuccessReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_FAILURE) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_FAILURE)
+                        {
                             _sequenceStatus = SequenceStatus.PA_FailureReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_BANNER) {
+                        if (packetType == SSH2PacketType.SSH_MSG_USERAUTH_BANNER)
+                        {
                             _sequenceStatus = SequenceStatus.PA_BannerReceived;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -1994,9 +2205,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Handles connection close.
         /// </summary>
-        public void OnConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.ConnectionClosed) {
+        public void OnConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.ConnectionClosed)
+                {
                     _sequenceStatus = SequenceStatus.ConnectionClosed;
                     DataFragment dummyPacket = new DataFragment(new byte[1] { 0xff }, 0, 1);
                     _receivedPacket.TrySet(dummyPacket, PASSING_TIMEOUT);
@@ -2010,9 +2224,12 @@ namespace Granados.SSH2 {
         /// <remarks>
         /// if an error has been occurred during the authentication, an exception will be thrown.
         /// </remarks>
-        public void ExecAuthentication() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.Idle) {
+        public void ExecAuthentication()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.Idle)
+                {
                     throw new InvalidOperationException(Strings.GetString("RequestedTaskIsAlreadyRunning"));
                 }
                 _sequenceStatus = SequenceStatus.StartAuthentication;
@@ -2025,12 +2242,15 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <returns>true if the sequence was succeeded</returns>
         /// <exception cref="SSHException">no response</exception>
-        private void DoAuthentication() {
+        private void DoAuthentication()
+        {
             bool keepSequenceStatusOnExit = false;
-            try {
+            try
+            {
                 ServiceRequest("ssh-userauth");
 
-                switch (_param.AuthenticationType) {
+                switch (_param.AuthenticationType)
+                {
                     case AuthenticationType.KeyboardInteractive:
                         KeyboardInteractiveUserAuth("ssh-connection");
                         keepSequenceStatusOnExit = true;
@@ -2045,10 +2265,13 @@ namespace Granados.SSH2 {
                         throw new SSHException(Strings.GetString("InvalidAuthenticationType"));
                 }
             }
-            finally {
-                if (!keepSequenceStatusOnExit) {
+            finally
+            {
+                if (!keepSequenceStatusOnExit)
+                {
                     _receivedPacket.Clear();
-                    lock (_sequenceLock) {
+                    lock (_sequenceLock)
+                    {
                         _sequenceStatus = SequenceStatus.Done;
                     }
                 }
@@ -2060,7 +2283,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="serviceName">service name</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildServiceRequestPacket(string serviceName) {
+        private SSH2Packet BuildServiceRequestPacket(string serviceName)
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_SERVICE_REQUEST)
                         .WriteString(serviceName);
         }
@@ -2069,8 +2293,10 @@ namespace Granados.SSH2 {
         /// SSH_MSG_SERVICE_REQUEST sequence.
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void ServiceRequest(string serviceName) {
-            lock (_sequenceLock) {
+        private void ServiceRequest(string serviceName)
+        {
+            lock (_sequenceLock)
+            {
                 Debug.Assert(_sequenceStatus == SequenceStatus.StartAuthentication);
                 _sequenceStatus = SequenceStatus.WaitServiceAccept;
             }
@@ -2081,11 +2307,13 @@ namespace Granados.SSH2 {
             _protocolEventManager.Trace("SSH_MSG_SERVICE_REQUEST : serviceName={0}", serviceName);
 
             DataFragment response = null;
-            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+            if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
                 throw new SSHException(Strings.GetString("ServerDoesntRespond"));
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.ServiceAcceptReceived);
             }
@@ -2099,7 +2327,8 @@ namespace Granados.SSH2 {
             _protocolEventManager.Trace("SSH_MSG_SERVICE_ACCEPT serviceName={0} ({1})",
                 responseServiceName, (responseServiceName != serviceName) ? "invalid" : "valid");
 
-            if (responseServiceName != serviceName) {
+            if (responseServiceName != serviceName)
+            {
                 throw new SSHException("Invalid service name : " + responseServiceName);
             }
         }
@@ -2109,7 +2338,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="serviceName"></param>
         /// <returns></returns>
-        private SSH2Packet BuildKeyboardInteractiveUserAuthRequestPacket(string serviceName) {
+        private SSH2Packet BuildKeyboardInteractiveUserAuthRequestPacket(string serviceName)
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_USERAUTH_REQUEST)
                         .WriteUTF8String(_param.UserName)
                         .WriteString(serviceName)
@@ -2124,10 +2354,12 @@ namespace Granados.SSH2 {
         /// <param name="serviceName">service name</param>
         /// <param name="inputs">user input</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildKeyboardInteractiveUserAuthInfoResponsePacket(string serviceName, string[] inputs) {
+        private SSH2Packet BuildKeyboardInteractiveUserAuthInfoResponsePacket(string serviceName, string[] inputs)
+        {
             var packet = new SSH2Packet(SSH2PacketType.SSH_MSG_USERAUTH_INFO_RESPONSE);
             packet.WriteInt32(inputs.Length);
-            foreach (string line in inputs) {
+            foreach (string line in inputs)
+            {
                 packet.WriteUTF8String(line);
             }
             return packet;
@@ -2137,18 +2369,22 @@ namespace Granados.SSH2 {
         /// Keyboard interactive authentication sequence.
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void KeyboardInteractiveUserAuth(string serviceName) {
-            lock (_sequenceLock) {
+        private void KeyboardInteractiveUserAuth(string serviceName)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.ServiceAcceptReceived);
             }
 
             // check handler
-            if (_kiHandler == null) {
+            if (_kiHandler == null)
+            {
                 throw new SSHException("KeyboardInteractiveAuthenticationHandler is required.");
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 _sequenceStatus = SequenceStatus.KI_WaitUserAuthInfoRequest;
             }
@@ -2166,31 +2402,37 @@ namespace Granados.SSH2 {
         /// Keyboard interactive authentication sequence. (runs asynchronously)
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void KeyboardInteractiveUserAuthInput(string serviceName) {
+        private void KeyboardInteractiveUserAuthInput(string serviceName)
+        {
             // notify
             _kiHandler.OnKeyboardInteractiveAuthenticationStarted();
 
             bool userAuthResult;
             Exception error;
-            try {
+            try
+            {
                 DoKeyboardInteractiveUserAuthInput(serviceName);
                 userAuthResult = true;
                 error = null;
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 userAuthResult = false;
                 error = e;
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 _sequenceStatus = SequenceStatus.Done;
             }
 
-            if (KeyboardInteractiveAuthenticationFinished != null) {
+            if (KeyboardInteractiveAuthenticationFinished != null)
+            {
                 KeyboardInteractiveAuthenticationFinished(userAuthResult);
             }
 
-            if (userAuthResult == false) {
+            if (userAuthResult == false)
+            {
                 _connection.Close();
             }
 
@@ -2204,17 +2446,21 @@ namespace Granados.SSH2 {
         /// Prompt lines, user input loop.
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void DoKeyboardInteractiveUserAuthInput(string serviceName) {
-            while (true) {
+        private void DoKeyboardInteractiveUserAuthInput(string serviceName)
+        {
+            while (true)
+            {
                 DataFragment response = null;
-                if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+                if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+                {
                     throw new SSHException(Strings.GetString("ServerDoesntRespond"));
                 }
 
                 SSH2DataReader reader = new SSH2DataReader(response);
                 SSH2PacketType packetType = (SSH2PacketType)reader.ReadByte();
 
-                lock (_sequenceLock) {
+                lock (_sequenceLock)
+                {
                     CheckConnectionClosed();
 
                     Debug.Assert(_sequenceStatus == SequenceStatus.KI_UserAuthInfoRequestReceived
@@ -2222,18 +2468,21 @@ namespace Granados.SSH2 {
                         || _sequenceStatus == SequenceStatus.KI_SuccessReceived
                         || _sequenceStatus == SequenceStatus.KI_BannerReceived);
 
-                    if (_sequenceStatus == SequenceStatus.KI_SuccessReceived) {
+                    if (_sequenceStatus == SequenceStatus.KI_SuccessReceived)
+                    {
                         _protocolEventManager.Trace("user authentication succeeded");
                         return;
                     }
 
-                    if (_sequenceStatus == SequenceStatus.KI_FailureReceived) {
+                    if (_sequenceStatus == SequenceStatus.KI_FailureReceived)
+                    {
                         string msg = reader.ReadString();
                         _protocolEventManager.Trace("user authentication failed: {0}", msg);
                         throw new SSHException(Strings.GetString("AuthenticationFailed"));
                     }
 
-                    if (_sequenceStatus == SequenceStatus.KI_BannerReceived) {
+                    if (_sequenceStatus == SequenceStatus.KI_BannerReceived)
+                    {
                         string msg = reader.ReadUTF8String();
                         string langtag = reader.ReadString();
                         _protocolEventManager.Trace("banner: lang={0} message={1}", langtag, msg);
@@ -2252,10 +2501,12 @@ namespace Granados.SSH2 {
                 int numPrompts = reader.ReadInt32();
 
                 string[] inputs;
-                if (numPrompts > 0) {
+                if (numPrompts > 0)
+                {
                     string[] prompts = new string[numPrompts];
                     bool[] echoes = new bool[numPrompts];
-                    for (int i = 0; i < numPrompts; i++) {
+                    for (int i = 0; i < numPrompts; i++)
+                    {
                         prompts[i] = reader.ReadUTF8String();
                         echoes[i] = reader.ReadBool();
                     }
@@ -2263,11 +2514,13 @@ namespace Granados.SSH2 {
                     // display prompt lines, and input lines
                     inputs = _kiHandler.KeyboardInteractiveAuthenticationPrompt(prompts, echoes);
                 }
-                else {
+                else
+                {
                     inputs = new string[0];
                 }
 
-                lock (_sequenceLock) {
+                lock (_sequenceLock)
+                {
                     CheckConnectionClosed();
                     _sequenceStatus = SequenceStatus.KI_WaitUserAuthInfoRequest;
                 }
@@ -2282,7 +2535,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="serviceName">service name</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildPasswordAuthRequestPacket(string serviceName) {
+        private SSH2Packet BuildPasswordAuthRequestPacket(string serviceName)
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_USERAUTH_REQUEST)
                     .WriteUTF8String(_param.UserName)
                     .WriteString(serviceName)
@@ -2296,7 +2550,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="serviceName">service name</param>
         /// <returns>a packet object</returns>
-        private SSH2Packet BuildPublickeyAuthRequestPacket(string serviceName) {
+        private SSH2Packet BuildPublickeyAuthRequestPacket(string serviceName)
+        {
             //public key authentication
             SSH2UserAuthKey kp = SSH2UserAuthKey.FromSECSHStyleFile(_param.IdentityFile, _param.Password);
             string algorithmName = kp.Algorithm.GetAlgorithmName();
@@ -2341,8 +2596,10 @@ namespace Granados.SSH2 {
         /// Password authentication sequence.
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void PasswordAuthentication(string serviceName) {
-            lock (_sequenceLock) {
+        private void PasswordAuthentication(string serviceName)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.ServiceAcceptReceived);
             }
@@ -2355,8 +2612,10 @@ namespace Granados.SSH2 {
         /// Public key authentication sequence.
         /// </summary>
         /// <param name="serviceName">service name</param>
-        private void PublickeyAuthentication(string serviceName) {
-            lock (_sequenceLock) {
+        private void PublickeyAuthentication(string serviceName)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.ServiceAcceptReceived);
             }
@@ -2371,8 +2630,10 @@ namespace Granados.SSH2 {
         /// <param name="serviceName">service name</param>
         /// <param name="packet">a request packet to send</param>
         /// <param name="traceMessage">trace message</param>
-        private void AuthenticationCore(string serviceName, SSH2Packet packet, string traceMessage) {
-            lock (_sequenceLock) {
+        private void AuthenticationCore(string serviceName, SSH2Packet packet, string traceMessage)
+        {
+            lock (_sequenceLock)
+            {
                 CheckConnectionClosed();
                 Debug.Assert(_sequenceStatus == SequenceStatus.ServiceAcceptReceived);
                 _sequenceStatus = SequenceStatus.PA_WaitUserAuthResponse;
@@ -2382,13 +2643,16 @@ namespace Granados.SSH2 {
 
             _protocolEventManager.Trace(traceMessage);
 
-            while (true) {
+            while (true)
+            {
                 DataFragment response = null;
-                if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
+                if (!_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+                {
                     throw new SSHException(Strings.GetString("ServerDoesntRespond"));
                 }
 
-                lock (_sequenceLock) {
+                lock (_sequenceLock)
+                {
                     CheckConnectionClosed();
 
                     SSH2DataReader reader = new SSH2DataReader(response);
@@ -2398,18 +2662,21 @@ namespace Granados.SSH2 {
                         || _sequenceStatus == SequenceStatus.PA_SuccessReceived
                         || _sequenceStatus == SequenceStatus.PA_BannerReceived);
 
-                    if (_sequenceStatus == SequenceStatus.PA_SuccessReceived) {
+                    if (_sequenceStatus == SequenceStatus.PA_SuccessReceived)
+                    {
                         _protocolEventManager.Trace("user authentication succeeded");
                         return;
                     }
 
-                    if (_sequenceStatus == SequenceStatus.PA_FailureReceived) {
+                    if (_sequenceStatus == SequenceStatus.PA_FailureReceived)
+                    {
                         string msg = reader.ReadString();
                         _protocolEventManager.Trace("user authentication failed: {0}", msg);
                         throw new SSHException(Strings.GetString("AuthenticationFailed"));
                     }
 
-                    if (_sequenceStatus == SequenceStatus.PA_BannerReceived) {
+                    if (_sequenceStatus == SequenceStatus.PA_BannerReceived)
+                    {
                         string msg = reader.ReadUTF8String();
                         string langtag = reader.ReadString();
                         _protocolEventManager.Trace("banner: lang={0} message={1}", langtag, msg);
@@ -2423,9 +2690,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Check ConnectionClosed.
         /// </summary>
-        private void CheckConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus == SequenceStatus.ConnectionClosed) {
+        private void CheckConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus == SequenceStatus.ConnectionClosed)
+                {
                     throw new SSHException(Strings.GetString("ConnectionClosed"));
                 }
             }
@@ -2437,7 +2707,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Class for supporting remote port-forwarding
     /// </summary>
-    internal class SSH2RemotePortForwarding : ISSHPacketInterceptor {
+    internal class SSH2RemotePortForwarding : ISSHPacketInterceptor
+    {
         #region
 
         private const int PASSING_TIMEOUT = 1000;
@@ -2449,12 +2720,14 @@ namespace Granados.SSH2 {
         private readonly SSH2SynchronousPacketHandler _syncHandler;
         private readonly SSHProtocolEventManager _protocolEventManager;
 
-        private class PortInfo {
+        private class PortInfo
+        {
             public readonly IRemotePortForwardingHandler RequestHandler;
             public readonly CreateChannelFunc CreateChannel;
             public readonly RegisterChannelFunc RegisterChannel;
 
-            public PortInfo(IRemotePortForwardingHandler requestHandler, CreateChannelFunc createChannel, RegisterChannelFunc registerChannel) {
+            public PortInfo(IRemotePortForwardingHandler requestHandler, CreateChannelFunc createChannel, RegisterChannelFunc registerChannel)
+            {
                 this.RequestHandler = requestHandler;
                 this.CreateChannel = createChannel;
                 this.RegisterChannel = registerChannel;
@@ -2467,7 +2740,8 @@ namespace Granados.SSH2 {
 
         private readonly AtomicBox<DataFragment> _receivedPacket = new AtomicBox<DataFragment>();
 
-        private enum SequenceStatus {
+        private enum SequenceStatus
+        {
             /// <summary>Idle</summary>
             Idle,
             /// <summary>the connection has been closed</summary>
@@ -2489,7 +2763,8 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Constructor
         /// </summary>
-        public SSH2RemotePortForwarding(SSH2SynchronousPacketHandler syncHandler, SSHProtocolEventManager protocolEventManager) {
+        public SSH2RemotePortForwarding(SSH2SynchronousPacketHandler syncHandler, SSHProtocolEventManager protocolEventManager)
+        {
             _syncHandler = syncHandler;
             _protocolEventManager = protocolEventManager;
         }
@@ -2499,22 +2774,28 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>result</returns>
-        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet) {
+        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet)
+        {
             SSH2PacketType packetType = (SSH2PacketType)packet[0];
             SSHPacketInterceptorResult result = CheckForwardedTcpIpPacket(packetType, packet);
-            if (result != SSHPacketInterceptorResult.PassThrough) {
+            if (result != SSHPacketInterceptorResult.PassThrough)
+            {
                 return result;
             }
 
-            lock (_sequenceLock) {
-                switch (_sequenceStatus) {
+            lock (_sequenceLock)
+            {
+                switch (_sequenceStatus)
+                {
                     case SequenceStatus.WaitTcpIpForwardResponse:
-                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_SUCCESS) {
+                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_SUCCESS)
+                        {
                             _sequenceStatus = SequenceStatus.TcpIpForwardSuccess;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_FAILURE) {
+                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_FAILURE)
+                        {
                             _sequenceStatus = SequenceStatus.TcpIpForwardFailure;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -2522,12 +2803,14 @@ namespace Granados.SSH2 {
                         break;
 
                     case SequenceStatus.WaitCancelTcpIpForwardResponse:
-                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_SUCCESS) {
+                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_SUCCESS)
+                        {
                             _sequenceStatus = SequenceStatus.CancelTcpIpForwardSuccess;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
                         }
-                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_FAILURE) {
+                        if (packetType == SSH2PacketType.SSH_MSG_REQUEST_FAILURE)
+                        {
                             _sequenceStatus = SequenceStatus.CancelTcpIpForwardFailure;
                             _receivedPacket.TrySet(packet, PASSING_TIMEOUT);
                             return SSHPacketInterceptorResult.Consumed;
@@ -2545,15 +2828,18 @@ namespace Granados.SSH2 {
         /// <param name="packetType">packet type</param>
         /// <param name="packet">packet data</param>
         /// <returns>result</returns>
-        private SSHPacketInterceptorResult CheckForwardedTcpIpPacket(SSH2PacketType packetType, DataFragment packet) {
-            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN) {
+        private SSHPacketInterceptorResult CheckForwardedTcpIpPacket(SSH2PacketType packetType, DataFragment packet)
+        {
+            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN)
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
             SSH2DataReader reader = new SSH2DataReader(packet);
             reader.ReadByte();  // skip packet type (message number)
             string channelType = reader.ReadString();
-            if (channelType != "forwarded-tcpip") {
+            if (channelType != "forwarded-tcpip")
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
@@ -2571,7 +2857,8 @@ namespace Granados.SSH2 {
 
             // reject the request if we don't know the port number.
             PortInfo portInfo;
-            if (!_portDict.TryGetValue(portConnected, out portInfo)) {
+            if (!_portDict.TryGetValue(portConnected, out portInfo))
+            {
                 RejectForwardedTcpIp(remoteChannel, "Cannot accept the request");
                 return SSHPacketInterceptorResult.Consumed;
             }
@@ -2586,15 +2873,18 @@ namespace Granados.SSH2 {
 
             // check the request by the request handler
             RemotePortForwardingReply reply;
-            try {
+            try
+            {
                 reply = portInfo.RequestHandler.OnRemotePortForwardingRequest(requestInfo, channel);
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 RejectForwardedTcpIp(remoteChannel, "Cannot accept the request");
                 return SSHPacketInterceptorResult.Consumed;
             }
 
-            if (!reply.Accepted) {
+            if (!reply.Accepted)
+            {
                 RejectForwardedTcpIp(remoteChannel, reply.ReasonMessage, (uint)reply.ReasonCode);
                 return SSHPacketInterceptorResult.Consumed;
             }
@@ -2611,9 +2901,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Handles connection close.
         /// </summary>
-        public void OnConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.ConnectionClosed) {
+        public void OnConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.ConnectionClosed)
+                {
                     _sequenceStatus = SequenceStatus.ConnectionClosed;
                     DataFragment dummyPacket = new DataFragment(new byte[1] { 0xff }, 0, 1);
                     _receivedPacket.TrySet(dummyPacket, PASSING_TIMEOUT);
@@ -2631,7 +2924,8 @@ namespace Granados.SSH2 {
         private void RejectForwardedTcpIp(
                 uint remoteChannel,
                 string description,
-                uint reasonCode = SSH2ChannelOpenFailureCode.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED) {
+                uint reasonCode = SSH2ChannelOpenFailureCode.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED)
+        {
 
             var packet = new SSH2ChannelOpenFailurePacket(remoteChannel, description, reasonCode);
             _syncHandler.Send(packet);
@@ -2644,7 +2938,8 @@ namespace Granados.SSH2 {
         /// <param name="addressToBind">IP address to bind</param>
         /// <param name="portNumberToBind">port number to bind</param>
         /// <returns></returns>
-        private SSH2Packet BuildTcpIpForwardPacket(string addressToBind, uint portNumberToBind) {
+        private SSH2Packet BuildTcpIpForwardPacket(string addressToBind, uint portNumberToBind)
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_GLOBAL_REQUEST)
                     .WriteString("tcpip-forward")
                     .WriteBool(true)    // want reply
@@ -2658,7 +2953,8 @@ namespace Granados.SSH2 {
         /// <param name="addressToBind">IP address to bind</param>
         /// <param name="portNumberToBind">port number to bind</param>
         /// <returns></returns>
-        private SSH2Packet BuildCancelTcpIpForwardPacket(string addressToBind, uint portNumberToBind) {
+        private SSH2Packet BuildCancelTcpIpForwardPacket(string addressToBind, uint portNumberToBind)
+        {
             return new SSH2Packet(SSH2PacketType.SSH_MSG_GLOBAL_REQUEST)
                     .WriteString("cancel-tcpip-forward")
                     .WriteBool(true)    // want reply
@@ -2680,7 +2976,8 @@ namespace Granados.SSH2 {
                 CreateChannelFunc createChannel,
                 RegisterChannelFunc registerChannel,
                 string addressToBind,
-                uint portNumberToBind) {
+                uint portNumberToBind)
+        {
 
             IRemotePortForwardingHandler requestHandlerWrapper =
                 new RemotePortForwardingHandlerIgnoreErrorWrapper(requestHandler);
@@ -2693,10 +2990,12 @@ namespace Granados.SSH2 {
                                 addressToBind,
                                 portNumberToBind,
                                 out portNumberBound);
-            if (success) {
+            if (success)
+            {
                 requestHandlerWrapper.OnRemotePortForwardingStarted(portNumberBound);
             }
-            else {
+            else
+            {
                 requestHandlerWrapper.OnRemotePortForwardingFailed();
             }
 
@@ -2709,13 +3008,17 @@ namespace Granados.SSH2 {
                 RegisterChannelFunc registerChannel,
                 string addressToBind,
                 uint portNumberToBind,
-                out uint portNumberBound) {
+                out uint portNumberBound)
+        {
 
             portNumberBound = 0;
 
-            lock (_sequenceLock) {
-                while (_sequenceStatus != SequenceStatus.Idle) {
-                    if (_sequenceStatus == SequenceStatus.ConnectionClosed) {
+            lock (_sequenceLock)
+            {
+                while (_sequenceStatus != SequenceStatus.Idle)
+                {
+                    if (_sequenceStatus == SequenceStatus.ConnectionClosed)
+                    {
                         return false;
                     }
                     Monitor.Wait(_sequenceLock);
@@ -2732,14 +3035,19 @@ namespace Granados.SSH2 {
 
             DataFragment response = null;
             bool accepted = false;
-            if (_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
-                lock (_sequenceLock) {
-                    if (_sequenceStatus == SequenceStatus.TcpIpForwardSuccess) {
+            if (_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
+                lock (_sequenceLock)
+                {
+                    if (_sequenceStatus == SequenceStatus.TcpIpForwardSuccess)
+                    {
                         accepted = true;
-                        if (portNumberToBind != 0) {
+                        if (portNumberToBind != 0)
+                        {
                             portNumberBound = portNumberToBind;
                         }
-                        else {
+                        else
+                        {
                             SSH2DataReader reader = new SSH2DataReader(response);
                             reader.ReadByte();  // message number
                             portNumberBound = reader.ReadUInt32();
@@ -2751,14 +3059,17 @@ namespace Granados.SSH2 {
                 }
             }
 
-            if (accepted) {
+            if (accepted)
+            {
                 _protocolEventManager.Trace("tcpip-forward succeeded : bound port={0}", portNumberBound);
             }
-            else {
+            else
+            {
                 _protocolEventManager.Trace("tcpip-forward failed");
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 // reset status
                 _sequenceStatus = SequenceStatus.Idle;
                 Monitor.PulseAll(_sequenceLock);
@@ -2773,10 +3084,14 @@ namespace Granados.SSH2 {
         /// <param name="addressToBind">IP address to bind on the server</param>
         /// <param name="portNumberToBind">port number to bind on the server</param>
         /// <returns>true if the remote port forwarding has been cancelled.</returns>
-        public bool CancelForwardedPort(string addressToBind, uint portNumberToBind) {
-            lock (_sequenceLock) {
-                while (_sequenceStatus != SequenceStatus.Idle) {
-                    if (_sequenceStatus == SequenceStatus.ConnectionClosed) {
+        public bool CancelForwardedPort(string addressToBind, uint portNumberToBind)
+        {
+            lock (_sequenceLock)
+            {
+                while (_sequenceStatus != SequenceStatus.Idle)
+                {
+                    if (_sequenceStatus == SequenceStatus.ConnectionClosed)
+                    {
                         return false;
                     }
                     Monitor.Wait(_sequenceLock);
@@ -2793,14 +3108,19 @@ namespace Granados.SSH2 {
 
             DataFragment response = null;
             bool accepted = false;
-            if (_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT)) {
-                lock (_sequenceLock) {
-                    if (_sequenceStatus == SequenceStatus.CancelTcpIpForwardSuccess) {
+            if (_receivedPacket.TryGet(ref response, RESPONSE_TIMEOUT))
+            {
+                lock (_sequenceLock)
+                {
+                    if (_sequenceStatus == SequenceStatus.CancelTcpIpForwardSuccess)
+                    {
                         accepted = true;
-                        if (portNumberToBind == 0) {
+                        if (portNumberToBind == 0)
+                        {
                             _portDict.Clear();
                         }
-                        else {
+                        else
+                        {
                             PortInfo oldVal;
                             _portDict.TryRemove(portNumberToBind, out oldVal);
                         }
@@ -2808,14 +3128,17 @@ namespace Granados.SSH2 {
                 }
             }
 
-            if (accepted) {
+            if (accepted)
+            {
                 _protocolEventManager.Trace("cancel-tcpip-forward succeeded");
             }
-            else {
+            else
+            {
                 _protocolEventManager.Trace("cancel-tcpip-forward failed");
             }
 
-            lock (_sequenceLock) {
+            lock (_sequenceLock)
+            {
                 // reset status
                 _sequenceStatus = SequenceStatus.Idle;
                 Monitor.PulseAll(_sequenceLock);
@@ -2830,7 +3153,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Class for supporting OpenSSH's agent forwarding
     /// </summary>
-    internal class SSH2OpenSSHAgentForwarding : ISSHPacketInterceptor {
+    internal class SSH2OpenSSHAgentForwarding : ISSHPacketInterceptor
+    {
         #region
 
         private const int PASSING_TIMEOUT = 1000;
@@ -2850,7 +3174,8 @@ namespace Granados.SSH2 {
 
         private readonly AtomicBox<DataFragment> _receivedPacket = new AtomicBox<DataFragment>();
 
-        private enum SequenceStatus {
+        private enum SequenceStatus
+        {
             /// <summary>Idle</summary>
             Idle,
             /// <summary>the connection has been closed</summary>
@@ -2865,7 +3190,8 @@ namespace Granados.SSH2 {
                 IAgentForwardingAuthKeyProvider authKeyProvider,
                 SSHProtocolEventManager protocolEventManager,
                 CreateChannelFunc createChannel,
-                RegisterChannelFunc registerChannel) {
+                RegisterChannelFunc registerChannel)
+        {
 
             _authKeyProvider = authKeyProvider;
             _syncHandler = syncHandler;
@@ -2879,16 +3205,19 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>result</returns>
-        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet) {
+        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet)
+        {
             SSH2PacketType packetType = (SSH2PacketType)packet[0];
-            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN) {
+            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN)
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
             SSH2DataReader reader = new SSH2DataReader(packet);
             reader.ReadByte();  // skip packet type (message number)
             string channelType = reader.ReadString();
-            if (channelType != "auth-agent@openssh.com") {
+            if (channelType != "auth-agent@openssh.com")
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
@@ -2896,7 +3225,8 @@ namespace Granados.SSH2 {
             uint initialWindowSize = reader.ReadUInt32();
             uint maxPacketSize = reader.ReadUInt32();
 
-            if (_authKeyProvider == null || !_authKeyProvider.IsAuthKeyProviderEnabled) {
+            if (_authKeyProvider == null || !_authKeyProvider.IsAuthKeyProviderEnabled)
+            {
                 RejectAuthAgent(remoteChannel, "Cannot accept the request");
                 _protocolEventManager.Trace("auth-agent@openssh.com : rejected");
                 return SSHPacketInterceptorResult.Consumed;
@@ -2925,9 +3255,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Handles connection close.
         /// </summary>
-        public void OnConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.ConnectionClosed) {
+        public void OnConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.ConnectionClosed)
+                {
                     _sequenceStatus = SequenceStatus.ConnectionClosed;
                     DataFragment dummyPacket = new DataFragment(new byte[1] { 0xff }, 0, 1);
                     _receivedPacket.TrySet(dummyPacket, PASSING_TIMEOUT);
@@ -2941,7 +3274,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="remoteChannel">remote channel number</param>
         /// <param name="description">description</param>
-        private void RejectAuthAgent(uint remoteChannel, string description) {
+        private void RejectAuthAgent(uint remoteChannel, string description)
+        {
             var packet = new SSH2ChannelOpenFailurePacket(remoteChannel, description);
             _syncHandler.Send(packet);
             _protocolEventManager.Trace("reject auth-agent@openssh.com : {0}", description);
@@ -2953,7 +3287,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// Class for supporting X11 forwarding
     /// </summary>
-    internal class SSH2X11Forwarding : ISSHPacketInterceptor {
+    internal class SSH2X11Forwarding : ISSHPacketInterceptor
+    {
         #region
 
         private const int PASSING_TIMEOUT = 1000;
@@ -2973,7 +3308,8 @@ namespace Granados.SSH2 {
 
         private readonly AtomicBox<DataFragment> _receivedPacket = new AtomicBox<DataFragment>();
 
-        private enum SequenceStatus {
+        private enum SequenceStatus
+        {
             /// <summary>Idle</summary>
             Idle,
             /// <summary>the connection has been closed</summary>
@@ -2988,7 +3324,8 @@ namespace Granados.SSH2 {
                 SSHProtocolEventManager protocolEventManager,
                 X11ConnectionManager x11ConnectionManager,
                 CreateChannelFunc createChannel,
-                RegisterChannelFunc registerChannel) {
+                RegisterChannelFunc registerChannel)
+        {
 
             _x11ConnectionManager = x11ConnectionManager;
             _syncHandler = syncHandler;
@@ -3002,16 +3339,19 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="packet">a packet image</param>
         /// <returns>result</returns>
-        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet) {
+        public SSHPacketInterceptorResult InterceptPacket(DataFragment packet)
+        {
             SSH2PacketType packetType = (SSH2PacketType)packet[0];
-            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN) {
+            if (packetType != SSH2PacketType.SSH_MSG_CHANNEL_OPEN)
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
             SSH2DataReader reader = new SSH2DataReader(packet);
             reader.ReadByte();  // skip packet type (message number)
             string channelType = reader.ReadString();
-            if (channelType != "x11") {
+            if (channelType != "x11")
+            {
                 return SSHPacketInterceptorResult.PassThrough;
             }
 
@@ -3021,7 +3361,8 @@ namespace Granados.SSH2 {
             string originatorAddr = reader.ReadString();
             uint originatorPort = reader.ReadUInt32();
 
-            if (_x11ConnectionManager == null || !_x11ConnectionManager.SetupDone) {
+            if (_x11ConnectionManager == null || !_x11ConnectionManager.SetupDone)
+            {
                 RejectX11(remoteChannel, "Cannot accept the request");
                 _protocolEventManager.Trace("x11 : rejected");
                 return SSHPacketInterceptorResult.Consumed;
@@ -3032,8 +3373,10 @@ namespace Granados.SSH2 {
                 initialWindowSize, maxPacketSize, originatorAddr, originatorPort);
 
             IPAddress ipaddr;
-            if (IPAddress.TryParse(originatorAddr, out ipaddr)) {
-                if (!IPAddress.IsLoopback(ipaddr)) {
+            if (IPAddress.TryParse(originatorAddr, out ipaddr))
+            {
+                if (!IPAddress.IsLoopback(ipaddr))
+                {
                     RejectX11(remoteChannel, "Cannot accept the request");
                     _protocolEventManager.Trace("x11 : rejected");
                     return SSHPacketInterceptorResult.Consumed;
@@ -3060,9 +3403,12 @@ namespace Granados.SSH2 {
         /// <summary>
         /// Handles connection close.
         /// </summary>
-        public void OnConnectionClosed() {
-            lock (_sequenceLock) {
-                if (_sequenceStatus != SequenceStatus.ConnectionClosed) {
+        public void OnConnectionClosed()
+        {
+            lock (_sequenceLock)
+            {
+                if (_sequenceStatus != SequenceStatus.ConnectionClosed)
+                {
                     _sequenceStatus = SequenceStatus.ConnectionClosed;
                     DataFragment dummyPacket = new DataFragment(new byte[1] { 0xff }, 0, 1);
                     _receivedPacket.TrySet(dummyPacket, PASSING_TIMEOUT);
@@ -3076,7 +3422,8 @@ namespace Granados.SSH2 {
         /// </summary>
         /// <param name="remoteChannel">remote channel number</param>
         /// <param name="description">description</param>
-        private void RejectX11(uint remoteChannel, string description) {
+        private void RejectX11(uint remoteChannel, string description)
+        {
             var packet = new SSH2ChannelOpenFailurePacket(remoteChannel, description);
             _syncHandler.Send(packet);
             _protocolEventManager.Trace("reject x11 : {0}", description);
@@ -3088,7 +3435,8 @@ namespace Granados.SSH2 {
     /// <summary>
     /// SSH_MSG_CHANNEL_OPEN_FAILURE packet.
     /// </summary>
-    internal class SSH2ChannelOpenFailurePacket : SSH2Packet {
+    internal class SSH2ChannelOpenFailurePacket : SSH2Packet
+    {
         /// <summary>
         /// Constructor
         /// </summary>
@@ -3099,7 +3447,8 @@ namespace Granados.SSH2 {
                 uint remoteChannel,
                 string description,
                 uint reasonCode = SSH2ChannelOpenFailureCode.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED)
-            : base(SSH2PacketType.SSH_MSG_CHANNEL_OPEN_FAILURE) {
+            : base(SSH2PacketType.SSH_MSG_CHANNEL_OPEN_FAILURE)
+        {
 
             this.WriteUInt32(remoteChannel)
                 .WriteUInt32(reasonCode)

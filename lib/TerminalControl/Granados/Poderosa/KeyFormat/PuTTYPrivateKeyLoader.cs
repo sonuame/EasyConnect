@@ -1,29 +1,32 @@
 ﻿// Copyright 2011-2017 The Poderosa Project.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
+using Granados.Crypto;
+using Granados.IO.SSH2;
+using Granados.Mono.Math;
+using Granados.PKI;
+using Granados.Util;
 using System;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
+using ECPoint = Granados.PKI.ECPoint;
 
-using Granados.Crypto;
-using Granados.PKI;
-using Granados.IO.SSH2;
-using Granados.Util;
-using Granados.Mono.Math;
-
-namespace Granados.Poderosa.KeyFormat {
+namespace Granados.Poderosa.KeyFormat
+{
 
     /// <summary>
     /// PuTTY SSH2 private key loader
     /// </summary>
-    internal class PuTTYPrivateKeyLoader : ISSH2PrivateKeyLoader {
+    internal class PuTTYPrivateKeyLoader : ISSH2PrivateKeyLoader
+    {
 
         private readonly string keyFilePath;
         private readonly byte[] keyFile;
 
-        private enum KeyType {
+        private enum KeyType
+        {
             RSA,
             DSA,
             ECDSA,
@@ -35,7 +38,8 @@ namespace Granados.Poderosa.KeyFormat {
         /// </summary>
         /// <param name="keyFile">key file data</param>
         /// <param name="keyFilePath">Path of a key file</param>
-        public PuTTYPrivateKeyLoader(byte[] keyFile, string keyFilePath) {
+        public PuTTYPrivateKeyLoader(byte[] keyFile, string keyFilePath)
+        {
             this.keyFilePath = keyFilePath;
             this.keyFile = keyFile;
         }
@@ -47,7 +51,8 @@ namespace Granados.Poderosa.KeyFormat {
         /// <param name="passphrase">passphrase for decrypt the key file</param>
         /// <param name="keyPair">key pair</param>
         /// <param name="comment">comment or empty if it didn't exist</param>
-        public void Load(string passphrase, out KeyPair keyPair, out string comment) {
+        public void Load(string passphrase, out KeyPair keyPair, out string comment)
+        {
             if (keyFile == null)
                 throw new SSHException("A key file is not loaded yet");
 
@@ -61,7 +66,8 @@ namespace Granados.Poderosa.KeyFormat {
             string privateMac;
             string privateHash;
 
-            using (StreamReader sreader = GetStreamReader()) {
+            using (StreamReader sreader = GetStreamReader())
+            {
                 //*** Read header and key type
                 ReadHeaderLine(sreader, out version, out keyTypeName);
 
@@ -81,7 +87,8 @@ namespace Granados.Poderosa.KeyFormat {
 
                 if (encryptionName == "aes256-cbc")
                     encryption = CipherAlgorithm.AES256;
-                else if (encryptionName == "none") {
+                else if (encryptionName == "none")
+                {
                     encryption = null;
                     passphrase = "";    // prevent HMAC error
                 }
@@ -113,7 +120,8 @@ namespace Granados.Poderosa.KeyFormat {
                 ReadPrivateMACLine(sreader, version, out privateMac, out privateHash);
             }
 
-            if (encryption.HasValue) {
+            if (encryption.HasValue)
+            {
                 byte[] key = PuTTYPassphraseToKey(passphrase);
                 byte[] iv = new byte[16];
                 Cipher cipher = CipherFactory.CreateCipher(SSHProtocol.SSH2, encryption.Value, key, iv);
@@ -124,14 +132,16 @@ namespace Granados.Poderosa.KeyFormat {
 
             bool verified = Verify(version, privateMac, privateHash,
                                 passphrase, keyTypeName, encryptionName, comment, publicBlob, privateBlob);
-            if (!verified) {
+            if (!verified)
+            {
                 if (encryption.HasValue)
                     throw new SSHException(Strings.GetString("WrongPassphrase"));
                 else
                     throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (HMAC verification failed)");
             }
 
-            if (keyType == KeyType.RSA) {
+            if (keyType == KeyType.RSA)
+            {
                 SSH2DataReader reader = new SSH2DataReader(publicBlob);
                 string magic = reader.ReadString();
                 if (magic != "ssh-rsa")
@@ -150,7 +160,8 @@ namespace Granados.Poderosa.KeyFormat {
 
                 keyPair = new RSAKeyPair(e, d, n, u, p, q);
             }
-            else if (keyType == KeyType.DSA) {
+            else if (keyType == KeyType.DSA)
+            {
                 SSH2DataReader reader = new SSH2DataReader(publicBlob);
                 string magic = reader.ReadString();
                 if (magic != "ssh-dss")
@@ -166,7 +177,8 @@ namespace Granados.Poderosa.KeyFormat {
 
                 keyPair = new DSAKeyPair(p, g, q, y, x);
             }
-            else if (keyType == KeyType.ECDSA) {
+            else if (keyType == KeyType.ECDSA)
+            {
                 SSH2DataReader reader = new SSH2DataReader(publicBlob);
                 string algorithmName = reader.ReadString();
                 string curveName = reader.ReadString();
@@ -176,21 +188,25 @@ namespace Granados.Poderosa.KeyFormat {
                 BigInteger privateKey = reader.ReadMPInt();
 
                 EllipticCurve curve = EllipticCurve.FindByName(curveName);
-                if (curve == null) {
+                if (curve == null)
+                {
                     throw new SSHException(Strings.GetString("UnsupportedEllipticCurve") + " : " + curveName);
                 }
                 ECPoint publicKey;
-                if (!ECPoint.Parse(publicKeyPt, curve, out publicKey)) {
+                if (!ECPoint.Parse(publicKeyPt, curve, out publicKey))
+                {
                     throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (parsing public key failed)");
                 }
 
                 keyPair = new ECDSAKeyPair(curve, new ECDSAPublicKey(curve, publicKey), privateKey);
 
-                if (!((ECDSAKeyPair)keyPair).CheckKeyConsistency()) {
+                if (!((ECDSAKeyPair)keyPair).CheckKeyConsistency())
+                {
                     throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (invalid key pair)");
                 }
             }
-            else if (keyType == KeyType.ED25519) {
+            else if (keyType == KeyType.ED25519)
+            {
                 SSH2DataReader reader = new SSH2DataReader(publicBlob);
                 string algorithmName = reader.ReadString();
                 byte[] publicKey = reader.ReadByteString();
@@ -199,22 +215,26 @@ namespace Granados.Poderosa.KeyFormat {
                 byte[] privateKey = reader.ReadByteString();
 
                 EdwardsCurve curve = EdwardsCurve.FindByAlgorithm(PublicKeyAlgorithm.ED25519);
-                if (curve == null) {
+                if (curve == null)
+                {
                     throw new SSHException(Strings.GetString("UnsupportedEllipticCurve"));
                 }
 
                 keyPair = new EDDSAKeyPair(curve, new EDDSAPublicKey(curve, publicKey), privateKey);
 
-                if (!((EDDSAKeyPair)keyPair).CheckKeyConsistency()) {
+                if (!((EDDSAKeyPair)keyPair).CheckKeyConsistency())
+                {
                     throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (invalid key pair)");
                 }
             }
-            else {
+            else
+            {
                 throw new SSHException("Unknown file type. This should not happen.");
             }
         }
 
-        private void ReadHeaderLine(StreamReader sreader, out int version, out string keyTypeName) {
+        private void ReadHeaderLine(StreamReader sreader, out int version, out string keyTypeName)
+        {
             string line = sreader.ReadLine();
             if (line == null)
                 throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (unexpected eof)");
@@ -229,7 +249,8 @@ namespace Granados.Poderosa.KeyFormat {
             keyTypeName = GetValueOf(line);
         }
 
-        private void ReadItemLine(StreamReader sreader, string itemName, out string itemValue) {
+        private void ReadItemLine(StreamReader sreader, string itemName, out string itemValue)
+        {
             string line = sreader.ReadLine();
             if (line == null)
                 throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (unexpected eof)");
@@ -240,28 +261,34 @@ namespace Granados.Poderosa.KeyFormat {
             itemValue = GetValueOf(line);
         }
 
-        private void ReadPrivateMACLine(StreamReader sreader, int version, out string privateMac, out string privateHash) {
+        private void ReadPrivateMACLine(StreamReader sreader, int version, out string privateMac, out string privateHash)
+        {
             string line = sreader.ReadLine();
             if (line == null)
                 throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (unexpected eof)");
 
-            if (line.StartsWith("Private-MAC:")) {
+            if (line.StartsWith("Private-MAC:"))
+            {
                 privateMac = GetValueOf(line);
                 privateHash = null;
             }
-            else if (version == 1 && line.StartsWith("Private-Hash:")) {
+            else if (version == 1 && line.StartsWith("Private-Hash:"))
+            {
                 privateMac = null;
                 privateHash = GetValueOf(line);
             }
-            else {
+            else
+            {
                 throw new SSHException(Strings.GetString("NotValidPrivateKeyFile")
                         + " (missing " + (version == 1 ? "Private-Hash" : "Private-MAC") + ")");
             }
         }
 
-        private void ReadBlob(StreamReader sreader, int lines, out byte[] blob) {
+        private void ReadBlob(StreamReader sreader, int lines, out byte[] blob)
+        {
             StringBuilder base64Buff = new StringBuilder();
-            for (int i = 0; i < lines; i++) {
+            for (int i = 0; i < lines; i++)
+            {
                 string line = sreader.ReadLine();
                 if (line == null)
                     throw new SSHException(Strings.GetString("NotValidPrivateKeyFile") + " (unexpected eof)");
@@ -270,7 +297,8 @@ namespace Granados.Poderosa.KeyFormat {
             blob = Base64.Decode(Encoding.ASCII.GetBytes(base64Buff.ToString()));
         }
 
-        private static byte[] PuTTYPassphraseToKey(string passphrase) {
+        private static byte[] PuTTYPassphraseToKey(string passphrase)
+        {
             const int HASH_SIZE = 20;
             SHA1CryptoServiceProvider sha1 = new SHA1CryptoServiceProvider();
             byte[] pp = Encoding.UTF8.GetBytes(passphrase);
@@ -292,14 +320,18 @@ namespace Granados.Poderosa.KeyFormat {
         }
 
         private bool Verify(int version, string privateMac, string privateHash,
-                string passphrase, string keyTypeName, string encryptionName, string comment, byte[] publicBlob, byte[] privateBlob) {
+                string passphrase, string keyTypeName, string encryptionName, string comment, byte[] publicBlob, byte[] privateBlob)
+        {
 
             byte[] macData;
-            using (MemoryStream macDataBuff = new MemoryStream()) {
-                if (version == 1) {
+            using (MemoryStream macDataBuff = new MemoryStream())
+            {
+                if (version == 1)
+                {
                     WriteMacData(macDataBuff, privateBlob);
                 }
-                else {
+                else
+                {
                     WriteMacData(macDataBuff, keyTypeName);
                     WriteMacData(macDataBuff, encryptionName);
                     WriteMacData(macDataBuff, comment);
@@ -310,7 +342,8 @@ namespace Granados.Poderosa.KeyFormat {
                 macData = macDataBuff.ToArray();
             }
 
-            if (privateMac != null) {
+            if (privateMac != null)
+            {
                 SHA1CryptoServiceProvider sha1 = new SHA1CryptoServiceProvider();
                 byte[] a = Encoding.ASCII.GetBytes("putty-private-key-file-mac-key");
                 sha1.TransformBlock(a, 0, a.Length, null, 0);
@@ -325,20 +358,23 @@ namespace Granados.Poderosa.KeyFormat {
                 string mac = BinToHex(hash);
                 return mac == privateMac;
             }
-            else if (privateHash != null) {
+            else if (privateHash != null)
+            {
                 SHA1CryptoServiceProvider sha1 = new SHA1CryptoServiceProvider();
                 byte[] hash = sha1.ComputeHash(macData);
                 sha1.Clear();
                 string mac = BinToHex(hash);
                 return mac == privateHash;
             }
-            else {
+            else
+            {
                 return true;
             }
         }
 
         // Extract value from "Name: value" line
-        private static string GetValueOf(string line) {
+        private static string GetValueOf(string line)
+        {
             int p = line.IndexOf(':');
             if (p < 0)
                 return null;
@@ -347,11 +383,13 @@ namespace Granados.Poderosa.KeyFormat {
             return line.Substring(p + 2);
         }
 
-        private static void WriteMacData(MemoryStream mem, string s) {
+        private static void WriteMacData(MemoryStream mem, string s)
+        {
             WriteMacData(mem, Encoding.UTF8.GetBytes(s));
         }
 
-        private static void WriteMacData(MemoryStream mem, byte[] data) {
+        private static void WriteMacData(MemoryStream mem, byte[] data)
+        {
             byte[] dw = BitConverter.GetBytes(data.Length);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(dw);
@@ -359,15 +397,18 @@ namespace Granados.Poderosa.KeyFormat {
             mem.Write(data, 0, data.Length);
         }
 
-        private static string BinToHex(byte[] data) {
+        private static string BinToHex(byte[] data)
+        {
             StringBuilder s = new StringBuilder();
-            foreach (byte b in data) {
+            foreach (byte b in data)
+            {
                 s.Append(b.ToString("x2", NumberFormatInfo.InvariantInfo));
             }
             return s.ToString();
         }
 
-        private StreamReader GetStreamReader() {
+        private StreamReader GetStreamReader()
+        {
             MemoryStream mem = new MemoryStream(keyFile, false);
             return new StreamReader(mem, Encoding.ASCII);
         }
